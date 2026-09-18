@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+env/
+.venv/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# AWS / SAM
+.aws-sam/
+.aws/
+samconfig.toml.bak
+*.zip
+packaged.yaml
+
+# Environment & secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Logs captured locally
+local-client/logs/
+*.log
+*.txt.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/

@@ -1,0 +1,42 @@
+============================================================
+=== DUMPSYS BATTERY ===
+============================================================
+Current Battery Service state:
+  level: 71
+  voltage: 4050
+  temperature: 450
+  health: 2
+
+============================================================
+=== DUMPSYS THERMAL_SERVICE ===
+============================================================
+IsThrottling: true
+ThermalThrottlingSeverity: 3
+Sensor: cpu, Temperature: 89.5, Throttling: true, ThrottlingStatus: SEVERE
+Sensor: skin, Temperature: 44.8, Throttling: true, ThrottlingStatus: MODERATE
+Sensor: battery, Temperature: 45.0, Throttling: true, ThrottlingStatus: LIGHT
+
+ThermalEventLog:
+  09-18 05:30:00 - Critical temperature threshold breached: cpu=89.5°C
+  09-18 05:28:12 - Thermal throttling initiated for CPU cluster 0
+  09-18 05:25:45 - Emergency throttle: skin temperature 44.8°C exceeded warning threshold
+  09-18 05:22:10 - Thermal throttling initiated for GPU
+  09-18 04:10:00 - Critical temperature threshold breached: cpu=91.0°C
+  09-18 03:55:30 - Emergency throttle: cpu=88.2°C
+
+CPU Throttling events in last 24h: 6
+
+============================================================
+=== DUMPSYS BATTERYSTATS ===
+============================================================
+  CPU usage from 24h ago:
+    com.heavygame.renderer: 71% user + 15% kernel
+    surfaceflinger: 8% user + 2% kernel
+
+============================================================
+=== LOGCAT (filtered, last 60s) ===
+============================================================
+09-18 05:30:01.000  1234  1235 W ThermalService: Critical temperature threshold breached: sensor=cpu, temp=89.5
+09-18 05:30:01.500  1234  1235 W ThermalService: Emergency shutdown temperature threshold approaching: cpu=89.5C (limit=95C)
+09-18 05:30:02.000  1234  1235 W PowerManagerService: Thermal throttling: reducing CPU max frequency to 768MHz
+09-18 05:30:10.100  1234  1235 W ActivityManager: App com.heavygame.renderer is using excessive CPU: 71%

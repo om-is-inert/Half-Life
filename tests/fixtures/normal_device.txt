@@ -1,0 +1,48 @@
+============================================================
+=== DUMPSYS BATTERY ===
+============================================================
+Current Battery Service state:
+  AC powered: false
+  USB powered: true
+  Wireless powered: false
+  Max charging current: 500000
+  Max charging voltage: 5000000
+  Charge counter: 2950000
+  status: 2
+  health: 2
+  present: true
+  level: 87
+  scale: 100
+  voltage: 4187
+  temperature: 280
+  technology: Li-ion
+  plug: 2
+
+============================================================
+=== DUMPSYS BATTERYSTATS ===
+============================================================
+Battery History:
+  Capacity: 4500, Computed drain: 450, actual drain: 448
+  Total run time: 3d 4h 22m 15s
+  Start clock time: 2026-09-15-08-44-00
+  Screen off discharge: 1.5%
+  Screen on discharge: 8.2%
+
+Discharge step durations:
+  #0: +4h10m0s to 87% (screen-off, power-save-off, device-idle-off)
+  #1: +2h15m0s to 78% (screen-on, power-save-off, device-idle-off)
+
+============================================================
+=== DUMPSYS THERMAL_SERVICE ===
+============================================================
+IsThrottling: false
+Sensor: battery, Temperature: 28.0, Throttling: false
+Sensor: cpu, Temperature: 35.2, Throttling: false
+Sensor: skin, Temperature: 31.0, Throttling: false
+
+============================================================
+=== LOGCAT (filtered, last 60s) ===
+============================================================
+09-18 07:44:01.234  1234  1235 I ActivityManager: Start proc 12345:com.google.android.gms/u0a123 for service
+09-18 07:44:02.101  1234  1235 I ActivityManager: Killing 11111:com.example.oldapp/u0a99 (adj 900): empty for 1801s
+09-18 07:44:10.500  5678  5680 D WifiStateMachine: CMD_START_SCAN

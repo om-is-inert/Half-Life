@@ -1,0 +1,23 @@
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "half-life"
+region = "us-east-1"
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+confirm_changeset = false
+resolve_s3 = true
+s3_prefix = "half-life"
+image_repository = ""
+fail_on_empty_changeset = false
+parameter_overrides = "Stage=prod"
+
+[default.build.parameters]
+use_container = false
+
+[dev]
+[dev.deploy.parameters]
+stack_name = "half-life-dev"
+parameter_overrides = "Stage=dev"

@@ -1,0 +1,48 @@
+============================================================
+=== DUMPSYS BATTERY ===
+============================================================
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Charge counter: 2100000
+  status: 3
+  health: 4
+  present: true
+  level: 62
+  scale: 100
+  voltage: 3780
+  temperature: 310
+  technology: Li-ion
+
+============================================================
+=== DUMPSYS BATTERYSTATS ===
+============================================================
+Battery History:
+  Capacity: 4500, Computed drain: 1850, actual drain: 1842
+  Total run time: 1d 2h 14m 08s
+  Start clock time: 2026-09-17-09-00-00
+  Screen off discharge: 6.3%
+  Screen on discharge: 18.7%
+
+Discharge step durations:
+  #0: +1h10m0s to 62% (screen-off, power-save-off, device-idle-off)
+  #1: +0h45m0s to 55% (screen-on, power-save-off, device-idle-off)
+  #2: +0h20m0s to 48% (screen-on, power-save-on, device-idle-off)
+
+Estimated battery capacity: 2820 mAh
+  Designed capacity: 4500 mAh
+
+============================================================
+=== DUMPSYS THERMAL_SERVICE ===
+============================================================
+IsThrottling: false
+Sensor: battery, Temperature: 31.0, Throttling: false
+Sensor: cpu, Temperature: 42.1, Throttling: false
+
+============================================================
+=== LOGCAT (filtered, last 60s) ===
+============================================================
+09-18 07:00:01.500  1234  1235 W BatteryService: Battery health: DEAD (4), level=62, voltage=3780
+09-18 07:00:05.120  1234  1235 W BatteryStatsService: Unexpected battery level drop: was 70, now 62
+09-18 07:00:10.340  1234  1235 E BatteryStatsService: Battery capacity reporting inconsistency: designed=4500, actual=2820

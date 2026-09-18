@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Half-Life — Android Hardware Triage</title>
+  <meta name="description" content="AI-powered Android hardware diagnostic tool. Paste your job ID to get a plain-English diagnosis of your device's health."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- ── Animated background ──────────────────────────────────────────── -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-orb orb-1" aria-hidden="true"></div>
+  <div class="bg-orb orb-2" aria-hidden="true"></div>
+
+  <!-- ── Header ───────────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">Half<span class="logo-accent">-Life</span></span>
+      </div>
+      <nav class="header-meta">
+        <span class="status-dot" id="api-status-dot" title="API Status"></span>
+        <span class="status-label" id="api-status-label">Connecting…</span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Main ─────────────────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- ── Lookup card ──────────────────────────────────────────────── -->
+    <section class="lookup-card glass-card" id="lookup-section">
+      <h1 class="card-title">Android Hardware Triage</h1>
+      <p class="card-subtitle">
+        Enter a diagnosis job ID to retrieve your AI-generated device health report.
+      </p>
+      <form class="lookup-form" id="lookup-form" autocomplete="off">
+        <div class="input-group">
+          <label for="job-id-input" class="sr-only">Job ID</label>
+          <input
+            type="text"
+            id="job-id-input"
+            class="job-input"
+            placeholder="e.g. a3f7c291-84bc-4e2d-9f01-b2d84c3e7a12"
+            spellcheck="false"
+          />
+          <button type="submit" class="btn btn-primary" id="lookup-btn">
+            <span class="btn-text">Diagnose</span>
+            <span class="btn-icon">→</span>
+          </button>
+        </div>
+        <p class="form-hint">
+          Run <code>python local-client/main.py</code> on your machine to get a Job ID.
+        </p>
+      </form>
+    </section>
+
+    <!-- ── Report section (hidden until result loads) ───────────────── -->
+    <section class="report-section" id="report-section" hidden>
+
+      <!-- Status / spinner -->
+      <div class="status-card glass-card" id="status-card">
+        <div class="spinner" id="status-spinner" aria-label="Loading"></div>
+        <p class="status-text" id="status-text">Waiting for diagnosis…</p>
+        <p class="status-job-id" id="status-job-id"></p>
+      </div>
+
+      <!-- Full report (shown when COMPLETE) -->
+      <div class="report-grid" id="report-grid" hidden>
+
+        <!-- Battery gauge -->
+        <div class="metric-card glass-card" id="battery-card">
+          <h2 class="metric-label">Battery Health</h2>
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 200 120" aria-hidden="true">
+              <!-- background arc -->
+              <path class="gauge-track" d="M 20 100 A 80 80 0 0 1 180 100" />
+              <!-- value arc (will be set by JS) -->
+              <path class="gauge-fill" id="gauge-fill" d="M 20 100 A 80 80 0 0 1 180 100" />
+            </svg>
+            <div class="gauge-center">
+              <span class="gauge-value" id="battery-pct">—</span>
+              <span class="gauge-unit">%</span>
+            </div>
+          </div>
+          <p class="metric-sublabel" id="battery-label">Unknown</p>
+        </div>
+
+        <!-- Severity badge -->
+        <div class="metric-card glass-card" id="severity-card">
+          <h2 class="metric-label">Severity</h2>
+          <div class="severity-badge-wrapper">
+            <span class="severity-badge" id="severity-badge">—</span>
+          </div>
+          <p class="metric-sublabel" id="root-cause-label">—</p>
+        </div>
+
+        <!-- Confidence bar -->
+        <div class="metric-card glass-card" id="confidence-card">
+          <h2 class="metric-label">AI Confidence</h2>
+          <div class="confidence-track">
+            <div class="confidence-fill" id="confidence-fill" style="width:0%"></div>
+          </div>
+          <p class="metric-sublabel" id="confidence-label">0%</p>
+        </div>
+
+        <!-- Crash + thermal counters -->
+        <div class="metric-card glass-card" id="events-card">
+          <h2 class="metric-label">Events (24 h)</h2>
+          <div class="events-row">
+            <div class="event-counter">
+              <span class="event-value" id="crash-count">—</span>
+              <span class="event-key">Crashes</span>
+            </div>
+            <div class="event-divider"></div>
+            <div class="event-counter">
+              <span class="event-value" id="thermal-count">—</span>
+              <span class="event-key">Thermal</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Offender card -->
+        <div class="offender-card glass-card" id="offender-card">
+          <h2 class="metric-label">Identified Culprit</h2>
+          <div class="offender-row">
+            <div class="offender-info">
+              <span class="offender-icon">📦</span>
+              <div>
+                <p class="offender-package" id="offender-package">None detected</p>
+                <p class="offender-meta" id="offender-meta"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Diagnosis summary -->
+        <div class="diagnosis-card glass-card" id="diagnosis-card">
+          <h2 class="metric-label">AI Diagnosis</h2>
+          <p class="diagnosis-text" id="diagnosis-text">—</p>
+        </div>
+
+        <!-- Fix it card -->
+        <div class="fix-card glass-card" id="fix-card">
+          <h2 class="metric-label">Recommended Fix</h2>
+          <p class="fix-action-label" id="fix-action-label">—</p>
+          <div class="adb-command-block" id="adb-block" hidden>
+            <code class="adb-command" id="adb-command"></code>
+            <button class="btn btn-fix" id="fix-btn">
+              <span class="btn-text">Run Fix</span>
+              <span class="btn-icon">⚡</span>
+            </button>
+          </div>
+          <div class="fix-result" id="fix-result" hidden></div>
+        </div>
+
+        <!-- Evidence snippets -->
+        <div class="evidence-card glass-card" id="evidence-card" hidden>
+          <h2 class="metric-label">Log Evidence</h2>
+          <ul class="evidence-list" id="evidence-list"></ul>
+        </div>
+
+      </div><!-- /report-grid -->
+    </section><!-- /report-section -->
+  </main>
+
+  <!-- ── Confirmation Modal ─────────────────────────────────────────── -->
+  <div class="modal-overlay" id="modal-overlay" hidden aria-modal="true" role="dialog">
+    <div class="modal glass-card">
+      <h2 class="modal-title">⚠️ Run ADB Command?</h2>
+      <p class="modal-body" id="modal-body"></p>
+      <code class="modal-cmd" id="modal-cmd"></code>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn btn-danger" id="modal-confirm">Yes, Run It</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ───────────────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <p>Half-Life · AI-Powered Android Hardware Triage · Powered by AWS Bedrock + Claude</p>
+  </footer>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ── State ──────────────────────────────────────────────────────────
+    let currentJobId = null;
+    let pollTimer = null;
+    let pendingAdbCmd = null;
+
+    // ── Elements ───────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const lookupForm     = $('lookup-form');
+    const jobInput       = $('job-id-input');
+    const lookupSection  = $('lookup-section');
+    const reportSection  = $('report-section');
+    const statusCard     = $('status-card');
+    const statusSpinner  = $('status-spinner');
+    const statusText     = $('status-text');
+    const statusJobId    = $('status-job-id');
+    const reportGrid     = $('report-grid');
+    const apiDot         = $('api-status-dot');
+    const apiLabel       = $('api-status-label');
+    const fixBtn         = $('fix-btn');
+    const fixResult      = $('fix-result');
+    const modalOverlay   = $('modal-overlay');
+    const modalBody      = $('modal-body');
+    const modalCmd       = $('modal-cmd');
+    const modalCancel    = $('modal-cancel');
+    const modalConfirm   = $('modal-confirm');
+
+    // ── API status check ───────────────────────────────────────────────
+    function checkApiStatus() {
+      fetch('/api/poll/healthcheck', { signal: AbortSignal.timeout(3000) })
+        .then(() => {
+          apiDot.className = 'status-dot online';
+          apiLabel.textContent = 'API Online';
+        })
+        .catch(() => {
+          apiDot.className = 'status-dot';
+          apiLabel.textContent = 'API Offline';
+        });
+    }
+
+    // ── Gauge rendering ────────────────────────────────────────────────
+    function setGauge(pct) {
+      const fill = $('gauge-fill');
+      if (pct === null || pct === undefined) {
+        fill.style.strokeDashoffset = '251';
+        $('battery-pct').textContent = '—';
+        return;
+      }
+      // Arc from 20,100 to 180,100 = 251px circumference for a 80r half-circle
+      const totalLen = 251;
+      const offset = totalLen - (pct / 100) * totalLen;
+      fill.style.strokeDashoffset = offset;
+      fill.style.stroke = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
+      $('battery-pct').textContent = pct;
+    }
+
+    // ── Severity badge ─────────────────────────────────────────────────
+    const SEVERITY_CLASS = { LOW: 'sev-low', MEDIUM: 'sev-medium', HIGH: 'sev-high', CRITICAL: 'sev-critical' };
+    function setSeverity(sev, cause) {
+      const badge = $('severity-badge');
+      badge.textContent = sev || '—';
+      badge.className = 'severity-badge ' + (SEVERITY_CLASS[sev] || '');
+      $('root-cause-label').textContent = (cause || '').replace(/_/g, ' ');
+    }
+
+    // ── Populate report ────────────────────────────────────────────────
+    function renderReport(report) {
+      setGauge(report.battery_health_pct);
+      $('battery-label').textContent = report.battery_health_pct !== null
+        ? (report.battery_health_pct >= 80 ? 'Healthy' : report.battery_health_pct >= 60 ? 'Degrading' : 'Replace Battery')
+        : 'Insufficient data';
+
+      setSeverity(report.severity, report.root_cause);
+
+      const conf = Math.round((report.confidence || 0) * 100);
+      $('confidence-fill').style.width = conf + '%';
+      $('confidence-label').textContent = conf + '% confidence';
+
+      $('crash-count').textContent = report.crash_count_24h ?? '—';
+      $('thermal-count').textContent = report.thermal_events ?? 0;
+
+      const pkg = report.offending_package;
+      $('offender-package').textContent = pkg || 'None detected';
+      const metas = [];
+      if (report.wakelock_offender) metas.push('Wakelock: ' + report.wakelock_offender);
+      if (report.cpu_offender) metas.push('CPU: ' + report.cpu_offender);
+      $('offender-meta').textContent = metas.join(' · ') || '';
+
+      $('diagnosis-text').textContent = report.diagnosis_summary || 'No summary available.';
+
+      $('fix-action-label').textContent = report.action_label || report.recommended_action || '—';
+      const adbCmd = report.adb_command;
+      if (adbCmd) {
+        $('adb-command').textContent = adbCmd;
+        $('adb-block').hidden = false;
+        pendingAdbCmd = adbCmd;
+      } else {
+        $('adb-block').hidden = true;
+      }
+
+      const snippets = report.evidence_snippets || [];
+      if (snippets.length) {
+        const list = $('evidence-list');
+        list.innerHTML = '';
+        snippets.forEach(s => {
+          const li = document.createElement('li');
+          li.className = 'evidence-item';
+          li.textContent = s;
+          list.appendChild(li);
+        });
+        $('evidence-card').hidden = false;
+      }
+
+      // animate in
+      reportGrid.hidden = false;
+      statusCard.hidden = true;
+      requestAnimationFrame(() => {
+        reportGrid.classList.add('report-visible');
+      });
+    }
+
+    // ── Poll loop ──────────────────────────────────────────────────────
+    async function poll(jobId) {
+      try {
+        const resp = await fetch('/api/poll/' + encodeURIComponent(jobId));
+        const data = await resp.json();
+        const status = data.status || 'UNKNOWN';
+
+        statusJobId.textContent = 'Job: ' + jobId;
+        statusText.textContent = {
+          PENDING:    '⏳ Waiting for upload to arrive…',
+          PROCESSING: '🔬 Cleaning and analysing log…',
+          FORMATTING: '📝 Generating human-readable report…',
+          COMPLETE:   '✅ Diagnosis complete!',
+          FAILED:     '❌ Diagnosis failed.',
+          UNKNOWN:    '🔄 Status unknown, retrying…',
+        }[status] || status;
+
+        if (status === 'COMPLETE') {
+          clearInterval(pollTimer);
+          renderReport(data.report || data);
+        } else if (status === 'FAILED') {
+          clearInterval(pollTimer);
+          statusSpinner.style.display = 'none';
+          statusText.style.color = 'var(--color-error)';
+        }
+      } catch (e) {
+        statusText.textContent = '⚠️ Network error — retrying…';
+      }
+    }
+
+    // ── Form submit ────────────────────────────────────────────────────
+    lookupForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const jobId = jobInput.value.trim();
+      if (!jobId) return;
+
+      currentJobId = jobId;
+      clearInterval(pollTimer);
+
+      // Reset UI
+      reportGrid.hidden = true;
+      reportGrid.classList.remove('report-visible');
+      statusCard.hidden = false;
+      statusSpinner.style.display = '';
+      statusText.textContent = 'Initialising…';
+      statusText.style.color = '';
+      $('evidence-card').hidden = true;
+      $('adb-block').hidden = true;
+      fixResult.hidden = true;
+
+      reportSection.hidden = false;
+      reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Start polling
+      poll(jobId);
+      pollTimer = setInterval(() => poll(jobId), 5000);
+    });
+
+    // Pre-fill from URL path if /status/<jobId>
+    const pathMatch = window.location.pathname.match(/\/status\/([^/]+)/);
+    if (pathMatch) {
+      jobInput.value = pathMatch[1];
+      lookupForm.dispatchEvent(new Event('submit'));
+    }
+
+    // ── Fix button / modal ─────────────────────────────────────────────
+    fixBtn.addEventListener('click', () => {
+      if (!pendingAdbCmd) return;
+      modalBody.textContent = 'This will execute the following ADB command on your connected device:';
+      modalCmd.textContent = pendingAdbCmd;
+      modalOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    });
+
+    modalCancel.addEventListener('click', () => {
+      modalOverlay.hidden = true;
+      document.body.style.overflow = '';
+    });
+
+    modalConfirm.addEventListener('click', async () => {
+      modalOverlay.hidden = true;
+      document.body.style.overflow = '';
+      fixBtn.disabled = true;
+      fixBtn.querySelector('.btn-text').textContent = 'Running…';
+
+      try {
+        const resp = await fetch('/api/run-adb', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: pendingAdbCmd, confirmed: true }),
+        });
+        const data = await resp.json();
+        fixResult.hidden = false;
+        if (data.returncode === 0) {
+          fixResult.className = 'fix-result fix-success';
+          fixResult.textContent = '✅ Success: ' + (data.stdout || 'Command completed.');
+        } else {
+          fixResult.className = 'fix-result fix-error';
+          fixResult.textContent = '❌ Error: ' + (data.stderr || data.error || 'Unknown error');
+        }
+      } catch (err) {
+        fixResult.hidden = false;
+        fixResult.className = 'fix-result fix-error';
+        fixResult.textContent = '❌ Network error: ' + err.message;
+      } finally {
+        fixBtn.disabled = false;
+        fixBtn.querySelector('.btn-text').textContent = 'Run Fix';
+      }
+    });
+
+    // ── Init ───────────────────────────────────────────────────────────
+    checkApiStatus();
+  })();
+  </script>
+</body>
+</html>
