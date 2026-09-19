@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  /* ── Backgrounds ─────────────────────────────────────────── */
+  --color-bg:           hsl(0, 0%, 4%);
+  --color-bg-subtle:    hsl(0, 0%, 6%);
+
+  /* ── Glass surfaces ─────────────────────────────────────── */
+  --color-glass:        hsla(0, 0%, 100%, 0.04);
+  --color-glass-border: hsla(0, 0%, 100%, 0.09);
+  --color-glass-hover:  hsla(0, 0%, 100%, 0.07);
+
+  /* ── Text hierarchy ──────────────────────────────────────── */
+  --color-text-1:       hsl(0, 0%, 96%);
+  --color-text-2:       hsl(0, 0%, 62%);
+  --color-text-3:       hsl(0, 0%, 36%);
+
+  /* ── Primary accent = white ──────────────────────────────── */
+  --color-primary:      hsl(0, 0%, 96%);
+  --color-primary-glow: hsla(0, 0%, 100%, 0.10);
+  --color-accent:       hsl(0, 0%, 72%);
+  --color-accent-glow:  hsla(0, 0%, 100%, 0.06);
+
+  /* ── Severity — pure grayscale tiers ────────────────────── */
+  /* LOW / success  → soft white */
+  --color-success:        hsl(0, 0%, 82%);
+  --color-success-bg:     hsla(0, 0%, 100%, 0.05);
+  --color-success-border: hsla(0, 0%, 100%, 0.12);
+
+  /* MEDIUM / warning → mid grey */
+  --color-warning:        hsl(0, 0%, 58%);
+  --color-warning-bg:     hsla(0, 0%, 100%, 0.04);
+  --color-warning-border: hsla(0, 0%, 100%, 0.10);
+
+  /* HIGH / error → dim white with white ring */
+  --color-error:        hsl(0, 0%, 96%);
+  --color-error-bg:     hsla(0, 0%, 100%, 0.06);
+  --color-error-border: hsla(0, 0%, 100%, 0.18);
+
+  /* CRITICAL → pure white, maximum contrast */
+  --color-critical:        hsl(0, 0%, 100%);
+  --color-critical-bg:     hsla(0, 0%, 100%, 0.08);
+  --color-critical-border: hsla(0, 0%, 100%, 0.28);
+
+  /* ── Typography ──────────────────────────────────────────── */
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'DM Mono', 'Fira Code', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  overflow: hidden;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsla(0,0%,100%,0.10); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsla(0,0%,100%,0.18); }
+
+/* ── Glass card ──────────────────────────────────────────────── */
+.glass-card {
+  background: var(--color-glass);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 10px;
+}
+
+/* ── Dot-grid background (matches reference) ─────────────────── */
+.dot-grid {
+  background-image: radial-gradient(
+    circle,
+    hsla(0, 0%, 100%, 0.10) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+
+/* ── Mono font utility ───────────────────────────────────────── */
+.font-mono { font-family: var(--font-mono); }
+
+/* ── Status dot pulse ────────────────────────────────────────── */
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.animate-pulse-opacity { animation: pulse-opacity 2s ease-in-out infinite; }
+
+/* ── Spinner ─────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 1s linear infinite; }
+
+/* ── Subtle orb drift (very muted) ──────────────────────────── */
+@keyframes orb-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(24px, -16px) scale(1.04); }
+}
+@keyframes orb-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(-20px, 22px) scale(0.96); }
+}
+.orb-1 { animation: orb-drift-1 26s ease-in-out infinite alternate; }
+.orb-2 { animation: orb-drift-2 32s ease-in-out infinite alternate; }
