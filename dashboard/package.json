@@ -17,6 +17,10 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@yume-chan/adb": "^2.6.4",
+    "@yume-chan/adb-credential-web": "*",
+    "@yume-chan/adb-daemon-webusb": "^2.3.2",
+    "@yume-chan/stream-extra": "*",
     "clsx": "^2.1.1",
     "framer-motion": "^13.4.0",
     "lucide-react": "^1.47.0",

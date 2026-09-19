@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useJobPolling } from './hooks/useJobPolling';
-import { JobLookup } from './components/dashboard/JobLookup';
+import { useAnalysis } from './hooks/useAnalysis';
+import { DeviceConnector } from './components/DeviceConnector';
 import { StatusLoader } from './components/dashboard/StatusLoader';
 import { MetricCards } from './components/dashboard/MetricCards';
 import { CulpritCard } from './components/dashboard/CulpritCard';
@@ -15,40 +15,60 @@ import { BackgroundOrbs } from './components/layout/BackgroundOrbs';
 import { Footer } from './components/layout/Footer';
 import Grainient from './components/ui/Grainient';
 import { formatDate } from './lib/utils';
+import type { DeviceSession } from './types/dashboard';
 
 export default function App() {
-  const { state, startPolling, retry } = useJobPolling();
+  const { state, analyzeWebUsb, analyzePaste, analyzeJobId, reset } = useAnalysis();
   const [modalOpen, setModalOpen] = useState(false);
+  const [connectedDevice, setConnectedDevice] = useState<DeviceSession | null>(null);
 
-  const { status, report, elapsedSeconds, isPolling } = state;
+  const { status, report, elapsedSeconds } = state;
 
-  const handleAdbConfirm = async () => {
-    await new Promise(r => setTimeout(r, 1800));
+  // Map new AnalysisStatus to the StatusLoader's expected JobStatus
+  const statusForLoader = ((): 'PENDING' | 'PROCESSING' | 'FORMATTING' | 'COMPLETE' | 'FAILED' => {
+    if (status === 'IDLE' || status === 'CONNECTING') return 'PENDING';
+    if (status === 'READING')    return 'PROCESSING';
+    if (status === 'ANALYSING')  return 'FORMATTING';
+    if (status === 'COMPLETE')   return 'COMPLETE';
+    return 'FAILED';
+  })();
+
+  const isHomePage = status === 'IDLE';
+  const isWorking  = status === 'READING' || status === 'ANALYSING' || status === 'CONNECTING';
+  const isLoading  = isWorking;
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleDeviceConnected = async (session: DeviceSession) => {
+    setConnectedDevice(session);
+    await analyzeWebUsb(session);
   };
 
-  const isHomePage = !isPolling && status === 'PENDING' && !report;
+  const handleAdbConfirm = async () => {
+    // ADB command executed via copy-to-clipboard (WebUSB doesn't run local adb)
+    await new Promise(r => setTimeout(r, 800));
+  };
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[var(--color-bg)] text-[var(--color-text-1)] relative">
       <BackgroundOrbs />
 
-      {/* Persistent top navbar */}
+      {/* Navbar */}
       <Navbar
         isOnline
-        deviceId={report?.device_id}
+        deviceId={connectedDevice?.serial ?? report?.device_id}
         jobId={report?.jobId}
         timestamp={report ? formatDate(report.created_at) : undefined}
       />
 
-      {/* Scrollable container below navbar */}
+      {/* Scrollable body */}
       <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center relative">
-        {/* Background Effects on Home Page */}
+
+        {/* Grainient hero on home */}
         {isHomePage && (
           <div
             className="pointer-events-none absolute top-0 left-0 w-full overflow-hidden"
             style={{ width: '100%', height: '600px', position: 'absolute', zIndex: 0 }}
           >
-            {/* Grainient Base Layer */}
             <div className="absolute inset-0">
               <Grainient
                 color1="#1c1c1c"
@@ -85,25 +105,30 @@ export default function App() {
               : 'py-8 px-4 sm:px-6 lg:px-8'
           }`}
         >
-          {/* Job Lookup Hero - Vertically centered on Home Page */}
+          {/* ── Home: Device Connector ─────────────────────────────────────── */}
           <AnimatePresence mode="wait">
             {isHomePage && (
               <motion.div
-                key="lookup"
-                className="w-full max-w-xl flex flex-col items-center my-auto"
+                key="connector"
+                className="w-full max-w-lg flex flex-col items-center my-auto"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25 }}
               >
-                <JobLookup onSubmit={startPolling} isLoading={false} />
+                <DeviceConnector
+                  analysisStatus={status}
+                  onDeviceConnected={handleDeviceConnected}
+                  onPasteSubmit={analyzePaste}
+                  onJobId={analyzeJobId}
+                />
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Status Loader */}
+          {/* ── Status Loader ─────────────────────────────────────────────── */}
           <AnimatePresence mode="wait">
-            {isPolling && (
+            {isLoading && (
               <motion.div
                 key="loader"
                 className="w-full max-w-2xl my-auto"
@@ -113,15 +138,15 @@ export default function App() {
                 transition={{ duration: 0.25 }}
               >
                 <StatusLoader
-                  status={status}
-                  jobId={state.report?.jobId ?? ''}
+                  status={statusForLoader}
+                  jobId={connectedDevice?.serial ?? ''}
                   elapsedSeconds={elapsedSeconds}
                 />
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Error / Failed State */}
+          {/* ── Error / Failed ─────────────────────────────────────────────── */}
           <AnimatePresence mode="wait">
             {status === 'FAILED' && (
               <motion.div
@@ -133,41 +158,26 @@ export default function App() {
                 transition={{ type: 'spring', damping: 28, stiffness: 200 }}
               >
                 <span className="text-5xl">🚨</span>
-                <h2
-                  className="text-2xl font-bold"
-                  style={{ color: 'var(--color-text-1)' }}
-                >
-                  Diagnosis Failed
+                <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-1)' }}>
+                  Analysis Failed
                 </h2>
-                <p
-                  className="text-sm max-w-sm"
-                  style={{ color: 'var(--color-text-2)' }}
-                >
-                  {state.error ?? 'An unknown error occurred during processing.'}
-                </p>
-                <p
-                  className="text-xs font-mono"
-                  style={{ color: 'var(--color-text-3)' }}
-                >
-                  Check CloudWatch logs for Lambda errors
+                <p className="text-sm max-w-sm" style={{ color: 'var(--color-text-2)' }}>
+                  {state.error ?? 'An unknown error occurred.'}
                 </p>
                 <button
-                  onClick={retry}
+                  onClick={reset}
                   className="px-5 py-2.5 rounded-lg glass-card text-sm font-semibold transition-all duration-150"
-                  style={{
-                    color: 'var(--color-text-1)',
-                    border: '1px solid var(--color-glass-border)',
-                  }}
+                  style={{ color: 'var(--color-text-1)', border: '1px solid var(--color-glass-border)' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-text-3)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-glass-border)')}
                 >
-                  ↩ Retry
+                  ↩ Try Again
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Full Report */}
+          {/* ── Full Report ───────────────────────────────────────────────── */}
           <AnimatePresence>
             {status === 'COMPLETE' && report && (
               <motion.div
@@ -193,13 +203,13 @@ export default function App() {
 
                 <div className="flex justify-center pt-4">
                   <button
-                    onClick={() => startPolling(report.jobId)}
+                    onClick={reset}
                     className="text-xs font-mono transition-colors duration-150"
                     style={{ color: 'var(--color-text-3)' }}
                     onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-text-2)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-3)')}
                   >
-                    ↩ Re-run diagnosis
+                    ↩ Analyse another device
                   </button>
                 </div>
               </motion.div>
@@ -210,7 +220,7 @@ export default function App() {
         <Footer className={isHomePage ? 'absolute bottom-0 w-full border-t border-[var(--color-glass-border)]/40' : 'mt-20'} />
       </div>
 
-      {/* ADB Confirmation Modal */}
+      {/* ADB Fix Modal */}
       <FixModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}

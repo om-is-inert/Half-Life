@@ -97,9 +97,14 @@ function SeverityBadge({ report }: { report: DiagnosisReport }) {
   );
 }
 
-// ── Confidence Bar ────────────────────────────────────────────────────────────
-function ConfidenceBar({ confidence }: { confidence: number }) {
-  const pct = Math.round(confidence * 100);
+// ── Battery Capacity Bar (replaces LLM confidence) ────────────────────────────
+function BatteryCapacityBar({ report }: { report: DiagnosisReport }) {
+  const estimated = report.estimated_capacity_mah;
+  const design    = report.design_capacity_mah;
+  const pct       = report.battery_health_pct;
+  const fillColor = getBatteryColor(pct);
+  const fillWidth = pct !== null ? `${Math.min(pct, 100)}%` : '0%';
+
   return (
     <div className="w-full flex flex-col gap-3">
       <div className="flex justify-between items-baseline">
@@ -107,13 +112,13 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
           className="text-[10px] font-semibold uppercase tracking-widest"
           style={{ color: 'var(--color-text-3)' }}
         >
-          AI Confidence
+          Capacity
         </span>
         <span
           className="text-2xl font-extrabold"
-          style={{ color: 'var(--color-text-1)' }}
+          style={{ color: fillColor }}
         >
-          {pct}%
+          {estimated !== null ? `${estimated} mAh` : '—'}
         </span>
       </div>
       {/* Track */}
@@ -123,15 +128,19 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
       >
         <motion.div
           className="h-full rounded-full"
-          style={{ background: 'var(--color-text-1)' }}
+          style={{ background: fillColor }}
           initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
+          animate={{ width: fillWidth }}
           transition={{ duration: 1.1, ease: 'easeInOut', delay: 0.15 }}
         />
       </div>
+      <p className="text-[10px]" style={{ color: 'var(--color-text-3)' }}>
+        {design !== null ? `Design: ${design} mAh` : 'Design capacity unknown'}
+      </p>
     </div>
   );
 }
+
 
 // ── Event Counters ────────────────────────────────────────────────────────────
 function EventCounters({ report }: { report: DiagnosisReport }) {
@@ -183,7 +192,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ report }) => {
   const cards = [
     { title: 'Battery Health', content: <BatteryGauge pct={report.battery_health_pct} /> },
     { title: 'Severity',       content: <SeverityBadge report={report} /> },
-    { title: 'Confidence',     content: <ConfidenceBar confidence={report.confidence} /> },
+    { title: 'Capacity',       content: <BatteryCapacityBar report={report} /> },
     { title: 'Events',         content: <EventCounters report={report} /> },
   ];
 
