@@ -1,4 +1,4 @@
-# ⚡ Half-Life — AI-Powered Android Hardware Triage
+#  Half-Life — AI-Powered Android Hardware Triage
 
 > Turn raw Android system logs into plain-English hardware/software diagnoses using a deterministic analysis engine and WebUSB.
 
@@ -92,11 +92,11 @@ Open: **http://localhost:5174** (or whatever port Vite gives you)
 
 ## Features
 
-- 🔋 **Exact Capacity Measurement**: Compares `estimated_mah` vs `design_mah` for exact wear percentages.
-- 🎯 **Deterministic Severity**: Strict threshold-based severity (LOW / MEDIUM / HIGH / CRITICAL).
-- 📦 **Wakelock & CPU Rankings**: Identifies rogue processes holding wakelocks or monopolizing CPU cycles.
-- 💬 **Plain-English Diagnosis**: Template-generated summaries with zero LLM hallucination risk.
-- ⚡ **One-click "Fix It"**: Generates safe, copyable `adb` commands to disable rogue apps or clear caches.
+-  **Exact Capacity Measurement**: Compares `estimated_mah` vs `design_mah` for exact wear percentages.
+-  **Deterministic Severity**: Strict threshold-based severity (LOW / MEDIUM / HIGH / CRITICAL).
+-  **Wakelock & CPU Rankings**: Identifies rogue processes holding wakelocks or monopolizing CPU cycles.
+-  **Plain-English Diagnosis**: Template-generated summaries with zero LLM hallucination risk.
+-  **One-click "Fix It"**: Generates safe, copyable `adb` commands to disable rogue apps or clear caches.
 
 ---
 
