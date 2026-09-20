@@ -13,6 +13,29 @@
 
 import type { DeviceSession, DiagnosticsPayload } from '../types/dashboard';
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMessage)), timeoutMs))
+  ]);
+}
+
+function mapWebUsbError(e: unknown): Error {
+  if (e instanceof Error) {
+    if (e.message.includes('No device selected')) {
+      return new Error('Device selection was cancelled.');
+    }
+    if (e.message.includes('Access denied')) {
+      return new Error('Access denied by OS. Ensure no other ADB server (like Android Studio) is running.');
+    }
+    if (e.message.includes('Unable to claim interface')) {
+      return new Error('Unable to claim USB interface. Disconnect other ADB tools and try again.');
+    }
+    return e;
+  }
+  return new Error(String(e));
+}
+
 // ── WebUSB support check ───────────────────────────────────────────────────────
 export function isWebUsbSupported(): boolean {
   return typeof navigator !== 'undefined' && 'usb' in navigator;
@@ -60,18 +83,40 @@ export async function connectDevice(): Promise<DeviceSession> {
   const manager = AdbDaemonWebUsbDeviceManager.BROWSER;
   if (!manager) throw new Error('WebUSB DeviceManager unavailable.');
 
-  const device = await manager.requestDevice();
-  if (!device) throw new Error('No device selected.');
+  let device;
+  try {
+    device = await manager.requestDevice();
+  } catch (e) {
+    throw mapWebUsbError(e);
+  }
+  if (!device) throw new Error('Device selection was cancelled.');
 
-  // Generate / retrieve RSA key pair for ADB authentication
   const credStore = new AdbWebCredentialStore('half-life-adb-key');
-  const connection = await device.connect();
+  let connection;
+  try {
+    connection = await device.connect();
+  } catch (e) {
+    throw mapWebUsbError(e);
+  }
 
-  const transport = await AdbDaemonTransport.authenticate({
-    serial: device.serial,
-    connection,
-    credentialStore: credStore,
-  });
+  let transport;
+  try {
+    transport = await withTimeout(
+      AdbDaemonTransport.authenticate({
+        serial: device.serial,
+        connection,
+        credentialStore: credStore,
+      }),
+      15000,
+      'Authorization timeout. Please tap "Allow" on your phone promptly.'
+    );
+  } catch (e: any) {
+    if (e.message.includes('timeout')) {
+      // Attempt to release the interface if we gave up
+      await device.raw.close().catch(() => {});
+    }
+    throw mapWebUsbError(e);
+  }
 
   const adb = new Adb(transport);
   _handle = { adb, serial: device.serial };
@@ -89,17 +134,60 @@ export async function connectDevice(): Promise<DeviceSession> {
   };
 }
 
-// ── Run a single adb shell command, return stdout ─────────────────────────────
-export async function runShell(handle: AdbHandle, command: string): Promise<string> {
-  // The @yume-chan/adb subprocess API
+export async function runShell(handle: AdbHandle, command: string, limitBytes = 1024 * 1024, timeoutMs = 10000): Promise<string> {
+  let process: any;
   try {
-    const output = await handle.adb.subprocess.noneProtocol.spawnWaitText(
-      ['shell', command]
-    );
-    return output ?? '';
+    process = await handle.adb.subprocess.noneProtocol.spawn(['shell', command]);
   } catch (e) {
-    return '';
+    return `[SPAWN ERROR: ${e instanceof Error ? e.message : String(e)}]`;
   }
+
+  return new Promise((resolve) => {
+    let output = '';
+    let bytesRead = 0;
+    const reader = process.output.getReader();
+    const decoder = new TextDecoder();
+    
+    let isDone = false;
+    
+    const timeout = setTimeout(() => {
+      if (isDone) return;
+      isDone = true;
+      process.kill();
+      resolve(output + '\n[INCOMPLETE: TIME LIMIT REACHED]');
+    }, timeoutMs);
+
+    async function pump() {
+      try {
+        while (!isDone) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          bytesRead += value.byteLength;
+          output += decoder.decode(value, { stream: true });
+          
+          if (bytesRead >= limitBytes) {
+            isDone = true;
+            process.kill();
+            output += decoder.decode();
+            resolve(output + '\n[INCOMPLETE: SIZE LIMIT REACHED]');
+            return;
+          }
+        }
+      } catch (e) {
+         output += `\n[READ ERROR: ${e instanceof Error ? e.message : String(e)}]`;
+      } finally {
+        if (!isDone) {
+          isDone = true;
+          clearTimeout(timeout);
+          output += decoder.decode();
+          resolve(output);
+        }
+      }
+    }
+    
+    pump();
+  });
 }
 
 // ── Collect targeted diagnostics (total output ~5-10 KB) ─────────────────────
@@ -109,13 +197,21 @@ export async function collectDiagnostics(session: DeviceSession): Promise<Diagno
   }
   const h = _handle;
 
-  // Run all 4 targeted commands in parallel
+  // Service discovery for thermal
+  const servicesList = await runShell(h, 'dumpsys -l', 512 * 1024, 5000);
+  let thermalServiceName = 'thermal_service'; // default
+  if (servicesList.includes('thermalservice\n') || servicesList.includes('thermalservice\r')) {
+    thermalServiceName = 'thermalservice';
+  } else if (servicesList.includes('thermal\n') || servicesList.includes('thermal\r')) {
+    thermalServiceName = 'thermal';
+  }
+
+  // Run all targeted commands in parallel
   const [battery_raw, batterystats_raw, cpuinfo_raw, thermal_raw] = await Promise.all([
-    runShell(h, 'dumpsys battery').catch(() => ''),
-    // Only grab the first 300 lines of batterystats to keep it compact
-    runShell(h, 'dumpsys batterystats 2>/dev/null | head -n 300').catch(() => ''),
-    runShell(h, 'dumpsys cpuinfo 2>/dev/null | head -n 80').catch(() => ''),
-    runShell(h, 'dumpsys thermal_service 2>/dev/null | head -n 60').catch(() => ''),
+    runShell(h, 'dumpsys battery'),
+    runShell(h, 'dumpsys batterystats', 1024 * 1024, 15000),
+    runShell(h, 'dumpsys cpuinfo', 1024 * 1024, 10000),
+    runShell(h, `dumpsys ${thermalServiceName}`),
   ]);
 
   return {
@@ -130,5 +226,8 @@ export async function collectDiagnostics(session: DeviceSession): Promise<Diagno
 
 // ── Disconnect / cleanup ───────────────────────────────────────────────────────
 export function disconnectDevice(): void {
-  _handle = null;
+  if (_handle) {
+    _handle.adb.close().catch(() => {});
+    _handle = null;
+  }
 }

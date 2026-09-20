@@ -163,9 +163,9 @@ function PasteTab({ onSubmit, isWorking }: {
         style={{ background: 'hsla(220,20%,5%,0.9)', color: 'hsl(142,71%,60%)', fontFamily: 'var(--font-mono)' }}
       >
         adb shell dumpsys battery<br/>
-        adb shell dumpsys batterystats | head -n 300<br/>
-        adb shell dumpsys cpuinfo | head -n 80<br/>
-        adb shell dumpsys thermal_service | head -n 60
+        adb shell dumpsys batterystats<br/>
+        adb shell dumpsys cpuinfo<br/>
+        adb shell dumpsys thermal_service
       </code>
 
       {[

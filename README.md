@@ -41,6 +41,12 @@
 ### AWS Services Required
 - Lambda, API Gateway, DynamoDB, IAM, CloudWatch
 
+### WebUSB Requirements
+WebUSB imposes strict security requirements:
+- **Supported Browsers**: Chrome, Edge, or Opera. (Firefox and Safari are **not** supported).
+- **Supported Platforms**: Windows, macOS, Linux, and Android. (iOS is **not** supported).
+- **Secure Context**: WebUSB requires a secure context. The dashboard must be served over **HTTPS** or **localhost**.
+
 ---
 
 ## Setup
