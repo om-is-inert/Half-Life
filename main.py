@@ -5,7 +5,7 @@ import urllib.request
 import urllib.error
 import sys
 
-API_URL = os.environ.get("HALF_LIFE_API_URL", "https://j31wrkwnb8.execute-api.us-east-1.amazonaws.com/dev/analyze")
+API_URL = os.environ.get("HALF_LIFE_API_URL", "https://j1bqi05936.execute-api.us-east-1.amazonaws.com/prod/analyze")
 
 def run_adb(command):
     try:
