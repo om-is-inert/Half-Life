@@ -8,7 +8,7 @@ interface DiagnosisCardProps {
 
 export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({ report }) => (
   <motion.div
-    className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8"
+    className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8 h-full"
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.15 }}
@@ -21,7 +21,7 @@ export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({ report }) => (
     </h3>
 
     <p
-      className="text-sm leading-relaxed flex-1 py-1.5"
+      className="text-base leading-relaxed flex-1 py-1.5"
       style={{ color: 'var(--color-text-1)', lineHeight: '1.9' }}
     >
       {report.diagnosis_summary || 'No diagnosis available.'}

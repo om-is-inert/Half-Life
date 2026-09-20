@@ -198,7 +198,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ report }) => {
       {cards.map((card, i) => (
         <motion.div
           key={card.title}
-          className="glass-card p-10 sm:p-12 lg:p-14 flex flex-col items-center gap-8"
+          className="glass-card p-10 sm:p-12 lg:p-14 flex flex-col items-center gap-8 h-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 200, delay: i * 0.06 }}

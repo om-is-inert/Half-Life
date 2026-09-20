@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Package } from 'lucide-react';
 import { Badge } from '../ui/Badge';
@@ -14,7 +14,7 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
 
   return (
     <motion.div
-      className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8"
+      className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8 h-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.1 }}
@@ -92,7 +92,7 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
       ) : (
         <div className="flex items-center gap-4 py-3">
           <span className="text-2xl">✅</span>
-          <span className="text-sm leading-relaxed" style={{ color: 'var(--color-text-1)' }}>
+          <span className="text-base leading-relaxed" style={{ color: 'var(--color-text-1)' }}>
             No dominant package offender found. System resources appear balanced.
           </span>
         </div>

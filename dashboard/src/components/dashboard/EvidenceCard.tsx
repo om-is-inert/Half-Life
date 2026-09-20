@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { CodeBlock } from '../ui/CodeBlock';
 import type { DiagnosisReport } from '../../types/dashboard';
@@ -18,7 +18,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ report }) => {
 
   return (
     <motion.div
-      className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8"
+      className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8 h-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.25 }}
