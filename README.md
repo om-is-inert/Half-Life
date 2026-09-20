@@ -92,7 +92,8 @@ Open: **http://localhost:5174** (or whatever port Vite gives you)
 6. The dashboard will instantly extract logs, analyze them, and present a diagnosis in seconds.
 
 ### Fallback Modes
-- **Paste Mode**: For browsers without WebUSB (Safari/Firefox), you can manually run ADB commands and paste the output.
+- **CLI Script**: Run `python main.py` in your terminal to automatically collect and upload all diagnostics if your browser does not support WebUSB.
+- **Paste Mode**: You can also manually run ADB commands and paste the output into the dashboard.
 - **Job ID**: Retrieve a past diagnosis by entering its Job ID.
 
 ---
@@ -101,6 +102,7 @@ Open: **http://localhost:5174** (or whatever port Vite gives you)
 
 -  **Exact Capacity Measurement**: Compares `estimated_mah` vs `design_mah` for exact wear percentages.
 -  **Deterministic Severity**: Strict threshold-based severity (LOW / MEDIUM / HIGH / CRITICAL).
+-  **Exhaustive Diagnostics**: Detects full storage, memory pressure, and app crash loops via `diskstats`, `meminfo`, and `dropbox`.
 -  **Wakelock & CPU Rankings**: Identifies rogue processes holding wakelocks or monopolizing CPU cycles.
 -  **Plain-English Diagnosis**: Template-generated summaries with zero LLM hallucination risk.
 -  **One-click "Fix It"**: Generates safe, copyable `adb` commands to disable rogue apps or clear caches.
@@ -140,6 +142,7 @@ Half-Life/
 │   ├── fixtures/            # Raw dumpsys Android logs for testing
 │   └── test_analyze.py      # Unit tests for the deterministic parser
 ├── amplify.yml              # Build spec for AWS Amplify Hosting
+├── main.py                  # CLI data collector script (fallback for WebUSB)
 └── README.md
 ```
 
@@ -185,6 +188,10 @@ Half-Life is built with strict privacy and operational controls to ensure diagno
       "kernel_pct": 9
     }
   ],
+  "crash_count_24h": 0,
+  "thermal_events": 0,
+  "memory_free_pct": 45,
+  "storage_utilization_pct": 65,
   "diagnosis_summary": "Your battery has degraded to approximately 78% of its original capacity (3100 mAh vs. the factory design of 4000 mAh).",
   "recommended_action": "replace_battery",
   "action_label": "Replace the battery — hardware service required",
