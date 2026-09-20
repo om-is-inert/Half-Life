@@ -66,7 +66,7 @@ export const FixCard: React.FC<FixCardProps> = ({ report, onRunFix }) => {
 
       <div className="flex items-center gap-4 pt-1">
         <Button
-          variant="outline"
+          variant="accent"
           size="md"
           onClick={onRunFix}
           isLoading={isRunning}
