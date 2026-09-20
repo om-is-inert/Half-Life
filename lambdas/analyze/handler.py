@@ -260,11 +260,11 @@ def classify(
             severity = "MEDIUM"
 
     # Thermal throttling
-    if thermal_events > 5:
+    if thermal_events >= 5:
         root_cause = root_cause if root_cause != "normal" else "thermal_throttling"
         if severity not in ("CRITICAL",):
             severity = "CRITICAL"
-    elif thermal_events > 2:
+    elif thermal_events >= 2:
         root_cause = root_cause if root_cause != "normal" else "thermal_throttling"
         if severity not in ("CRITICAL", "HIGH"):
             severity = "HIGH"
