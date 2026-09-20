@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { DiagnosisReport } from '../../types/dashboard';
 
@@ -24,15 +24,15 @@ export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({ report }) => (
       className="text-sm leading-relaxed flex-1 py-1.5"
       style={{ color: 'var(--color-text-1)', lineHeight: '1.9' }}
     >
-      {report.diagnosis_summary}
+      {report.diagnosis_summary || 'No diagnosis available.'}
     </p>
 
     <p
       className="text-[11px] pt-4 border-t border-[var(--color-glass-border)]/40"
       style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-2)' }}
     >
-      {report.diagnosis_summary.length} chars &middot;{' '}
-      {report.diagnosis_summary.split(/[.!?]+/).filter(Boolean).length} sentences
+      {(report.diagnosis_summary || '').length} chars &middot;{' '}
+      {(report.diagnosis_summary || '').split(/[.!?]+/).filter(Boolean).length} sentences
     </p>
   </motion.div>
 );

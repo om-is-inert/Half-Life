@@ -66,7 +66,12 @@ function BatteryGauge({ pct }: { pct: number | null }) {
 }
 
 function SeverityBadge({ report }: { report: DiagnosisReport }) {
-  const cfg = SEVERITY_CONFIG[report.severity];
+  const cfg = SEVERITY_CONFIG[report.severity] || {
+    color: 'var(--color-text-2)',
+    bg: 'var(--color-glass)',
+    border: 'var(--color-glass-border)',
+    label: 'Unknown'
+  };
 
   return (
     <div className="flex flex-col items-center gap-4 py-2">
