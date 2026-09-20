@@ -26,7 +26,6 @@ const ADB_DEVICE_FILTER: USBDeviceFilter[] = [
 // ── Internal types ────────────────────────────────────────────────────────────
 type AdbLib      = typeof import('@yume-chan/adb');
 type AdbDaemonLib = typeof import('@yume-chan/adb-daemon-webusb');
-type AdbCredLib  = typeof import('@yume-chan/adb-credential-web');
 
 interface AdbHandle {
   adb: InstanceType<AdbLib['Adb']>;
@@ -36,17 +35,14 @@ interface AdbHandle {
 let _handle: AdbHandle | null = null;
 
 // ── Lazy-load the heavy ADB libs ───────────────────────────────────────────────
-async function loadAdbLibs(): Promise<{
-  adbLib: AdbLib;
-  daemonLib: AdbDaemonLib;
-  credLib: AdbCredLib;
-}> {
-  const [adbLib, daemonLib, credLib] = await Promise.all([
+async function loadAdbLibs() {
+  const [adbLib, daemonLib, credLibModule] = await Promise.all([
     import('@yume-chan/adb'),
     import('@yume-chan/adb-daemon-webusb'),
     import('@yume-chan/adb-credential-web'),
   ]);
-  return { adbLib, daemonLib, credLib };
+  const AdbWebCredentialStore = credLibModule.default;
+  return { adbLib, daemonLib, AdbWebCredentialStore };
 }
 
 // ── Connect to device via WebUSB browser picker ───────────────────────────────
@@ -55,14 +51,13 @@ export async function connectDevice(): Promise<DeviceSession> {
     throw new Error('WebUSB is not supported in this browser. Please use Chrome or Edge.');
   }
 
-  const { adbLib, daemonLib, credLib } = await loadAdbLibs();
+  const { adbLib, daemonLib, AdbWebCredentialStore } = await loadAdbLibs();
   const { Adb, AdbDaemonTransport } = adbLib;
   const { AdbDaemonWebUsbDeviceManager } = daemonLib;
-  const { AdbWebCredentialStore } = credLib;
 
 
   // Open the browser's native USB device picker
-  const manager = AdbDaemonWebUsbDeviceManager.BROWSER_DEFAULT;
+  const manager = AdbDaemonWebUsbDeviceManager.BROWSER;
   if (!manager) throw new Error('WebUSB DeviceManager unavailable.');
 
   const device = await manager.requestDevice();
@@ -97,10 +92,14 @@ export async function connectDevice(): Promise<DeviceSession> {
 // ── Run a single adb shell command, return stdout ─────────────────────────────
 export async function runShell(handle: AdbHandle, command: string): Promise<string> {
   // The @yume-chan/adb subprocess API
-  const process = await handle.adb.subprocess.spawnAndWaitLegacy(
-    ['shell', command],
-  );
-  return process.stdout ?? '';
+  try {
+    const output = await handle.adb.subprocess.noneProtocol.spawnWaitText(
+      ['shell', command]
+    );
+    return output ?? '';
+  } catch (e) {
+    return '';
+  }
 }
 
 // ── Collect targeted diagnostics (total output ~5-10 KB) ─────────────────────

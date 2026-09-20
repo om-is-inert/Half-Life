@@ -56,17 +56,19 @@ export const ROOT_CAUSE_LABELS: Record<RootCause, string> = {
   thermal_throttling:  'Thermal Throttling',
   memory_leak:         'Memory Leak',
   kernel_panic:        'Kernel Panic',
+  normal:              'Healthy',
   unknown:             'Unknown',
 };
 
 // ── Recommended action labels ────────────────────────────────────────────────
 export const ACTION_LABELS: Record<RecommendedAction, string> = {
-  force_disable_package: 'Force Disable Package',
-  replace_battery:       'Replace Battery',
-  factory_reset:         'Factory Reset',
-  clear_cache:           'Clear App Cache',
-  update_firmware:       'Update Firmware',
-  none:                  'No Action Required',
+  force_stop_package: 'Force Stop Package',
+  disable_package:    'Disable Package',
+  replace_battery:    'Replace Battery',
+  factory_reset:      'Factory Reset',
+  clear_cache:        'Clear App Cache',
+  update_firmware:    'Update Firmware',
+  none:               'No Action Required',
 };
 
 // ── Polling config ───────────────────────────────────────────────────────────

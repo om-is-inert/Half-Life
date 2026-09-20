@@ -10,8 +10,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Usb, ClipboardPaste, Hash, AlertTriangle, Loader2, Smartphone } from 'lucide-react';
-import { isWebUsbSupported, connectDevice } from '../../lib/webadb';
-import type { DeviceSession, AnalysisStatus } from '../../types/dashboard';
+import { isWebUsbSupported, connectDevice } from '../lib/webadb';
+import type { DeviceSession, AnalysisStatus } from '../types/dashboard';
 
 type Tab = 'usb' | 'paste' | 'jobid';
 
@@ -268,18 +268,26 @@ export const DeviceConnector: React.FC<DeviceConnectorProps> = ({
         >
           ⚡
         </div>
-        <h1
-          className="text-3xl font-extrabold tracking-tight"
-          style={{
-            background: 'linear-gradient(135deg, var(--color-text-1) 0%, var(--color-primary) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          Android Hardware Triage
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1
+            className="text-3xl font-extrabold tracking-tight"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-text-1) 0%, var(--color-primary) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            Android Hardware Triage
+          </h1>
+          <span
+            className="px-2 py-0.5 rounded text-[10px] font-bold tracking-widest"
+            style={{ background: 'var(--color-glass)', color: 'var(--color-warning)', border: '1px solid var(--color-warning)' }}
+          >
+            EXPERIMENTAL
+          </span>
+        </div>
         <p className="text-sm max-w-sm" style={{ color: 'var(--color-text-2)' }}>
-          Instant, exact battery health analysis — no installs, no guesswork.
+          Instant battery and hardware health analysis — directly from your browser.
         </p>
       </div>
 

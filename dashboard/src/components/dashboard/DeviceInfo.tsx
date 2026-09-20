@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Copy, Check } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { DiagnosisReport } from '../../types/dashboard';
-import { bytesToMB, formatDate } from '../../lib/utils';
+import { formatDate } from '../../lib/utils';
 
 interface DeviceInfoProps {
   report: DiagnosisReport;
@@ -23,8 +23,6 @@ export const DeviceInfo: React.FC<DeviceInfoProps> = ({ report }) => {
     ['Device Serial', report.device_id],
     ['Job ID',        report.jobId],
     ['Completed At',  formatDate(report.completed_at)],
-    ['Raw Log Size',  bytesToMB(report.raw_size)],
-    ['Chunk Count',   String(report.chunk_count)],
   ];
 
   return (

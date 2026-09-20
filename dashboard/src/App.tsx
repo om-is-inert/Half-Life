@@ -7,7 +7,6 @@ import { MetricCards } from './components/dashboard/MetricCards';
 import { CulpritCard } from './components/dashboard/CulpritCard';
 import { DiagnosisCard } from './components/dashboard/DiagnosisCard';
 import { FixCard } from './components/dashboard/FixCard';
-import { FixModal } from './components/dashboard/FixModal';
 import { EvidenceCard } from './components/dashboard/EvidenceCard';
 import { DeviceInfo } from './components/dashboard/DeviceInfo';
 import { Navbar } from './components/layout/Navbar';
@@ -19,7 +18,6 @@ import type { DeviceSession } from './types/dashboard';
 
 export default function App() {
   const { state, analyzeWebUsb, analyzePaste, analyzeJobId, reset } = useAnalysis();
-  const [modalOpen, setModalOpen] = useState(false);
   const [connectedDevice, setConnectedDevice] = useState<DeviceSession | null>(null);
 
   const { status, report, elapsedSeconds } = state;
@@ -41,11 +39,6 @@ export default function App() {
   const handleDeviceConnected = async (session: DeviceSession) => {
     setConnectedDevice(session);
     await analyzeWebUsb(session);
-  };
-
-  const handleAdbConfirm = async () => {
-    // ADB command executed via copy-to-clipboard (WebUSB doesn't run local adb)
-    await new Promise(r => setTimeout(r, 800));
   };
 
   return (
@@ -195,7 +188,7 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <FixCard report={report} onRunFix={() => setModalOpen(true)} />
+                  <FixCard report={report} />
                   <EvidenceCard report={report} />
                 </div>
 
@@ -219,14 +212,6 @@ export default function App() {
 
         <Footer className={isHomePage ? 'absolute bottom-0 w-full border-t border-[var(--color-glass-border)]/40' : 'mt-20'} />
       </div>
-
-      {/* ADB Fix Modal */}
-      <FixModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        adbCommand={report?.adb_command ?? ''}
-        onConfirm={handleAdbConfirm}
-      />
     </div>
   );
 }

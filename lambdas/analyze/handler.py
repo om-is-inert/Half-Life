@@ -144,9 +144,9 @@ def parse_wakelocks(batterystats: str) -> list[dict]:
 
 def parse_cpu(cpuinfo: str) -> list[dict]:
     results = []
-    # "  38% com.facebook.katana: 29% user + 9% kernel"
+    # e.g., "  67.5% 1234/com.example.app: 60.1% user + 7.4% kernel"
     pattern = re.compile(
-        r"^\s*(\d+)%\s+([\w./: ]+?):\s*(\d+)%\s+user\s+\+\s+(\d+)%\s+kernel",
+        r"^\s*([\d.]+)%\s+(?:[\d]+/)?([\w.-]+)(?::.*?)?:\s*([\d.]+)%\s+user\s+\+\s*([\d.]+)%\s+kernel",
         re.MULTILINE,
     )
     for m in pattern.finditer(cpuinfo):
@@ -155,9 +155,9 @@ def parse_cpu(cpuinfo: str) -> list[dict]:
             continue
         results.append({
             "package":    pkg,
-            "total_pct":  int(m.group(1)),
-            "user_pct":   int(m.group(3)),
-            "kernel_pct": int(m.group(4)),
+            "total_pct":  float(m.group(1)),
+            "user_pct":   float(m.group(3)),
+            "kernel_pct": float(m.group(4)),
         })
     return sorted(results, key=lambda x: x["total_pct"], reverse=True)[:5]
 
@@ -168,7 +168,7 @@ def parse_cpu(cpuinfo: str) -> list[dict]:
 
 def parse_thermal(thermal: str) -> int:
     matches = re.findall(
-        r"throttl|critical temperature|emergency shutdown|IsThrottling:\s*true",
+        r"IsThrottling:\s*true|Critical Temperature:\s*true|emergency shutdown",
         thermal,
         re.IGNORECASE,
     )
@@ -242,9 +242,13 @@ ADB_COMMANDS = {
 
 def build_adb_command(action: str, package: str | None) -> str | None:
     template = ADB_COMMANDS.get(action)
-    if template is None or package is None:
-        return template
-    return template.format(package=package)
+    if not template:
+        return None
+    if "{package}" in template:
+        if not package:
+            return None
+        return template.format(package=package)
+    return template
 
 
 # ---------------------------------------------------------------------------
@@ -327,9 +331,19 @@ def handler(event: dict, context) -> dict:
     cpu_top5 = parse_cpu(cpuinfo_raw)
     thermal_events = parse_thermal(thermal_raw)
 
-    wear_pct     = capacity["wear_pct"] or battery["level"]
-    top_cpu_pct  = cpu_top5[0]["total_pct"] if cpu_top5 else 0
-    top_package  = cpu_top5[0]["package"]   if cpu_top5 else None
+    wear_pct = capacity["wear_pct"]
+    
+    # Find the top non-system package for rogue process evaluation
+    top_cpu_pct = 0
+    top_package = None
+    for c in cpu_top5:
+        pkg = c["package"]
+        if pkg in ("system_server", "android", "TOTAL") or pkg.startswith("com.android."):
+            continue
+        if c["total_pct"] > top_cpu_pct:
+            top_cpu_pct = c["total_pct"]
+            top_package = pkg
+            break
 
     # ── Classify ───────────────────────────────────────────────────────────────
     classification = classify(wear_pct, top_cpu_pct, thermal_events)

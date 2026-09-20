@@ -4,17 +4,14 @@ import { Copy, Check, Play } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { CodeBlock } from '../ui/CodeBlock';
-import type { DiagnosisReport, AdbRunResult } from '../../types/dashboard';
+import type { DiagnosisReport } from '../../types/dashboard';
 
 interface FixCardProps {
   report: DiagnosisReport;
-  onRunFix: () => void;
 }
 
-export const FixCard: React.FC<FixCardProps> = ({ report, onRunFix }) => {
+export const FixCard: React.FC<FixCardProps> = ({ report }) => {
   const [copied, setCopied] = useState(false);
-  const [result, setResult] = useState<AdbRunResult | null>(null);
-  const [isRunning] = useState(false);
 
   const handleCopy = async () => {
     if (!report.adb_command) return;
@@ -60,6 +57,9 @@ export const FixCard: React.FC<FixCardProps> = ({ report, onRunFix }) => {
 
       {report.adb_command ? (
         <>
+          <p className="text-xs" style={{ color: 'var(--color-text-3)' }}>
+            This command must be run manually in your terminal. Please review it carefully before execution.
+          </p>
           <CodeBlock code={report.adb_command} />
 
           <div className="flex gap-2">
@@ -78,30 +78,7 @@ export const FixCard: React.FC<FixCardProps> = ({ report, onRunFix }) => {
               </motion.span>
               {copied ? 'Copied ✓' : 'Copy'}
             </Button>
-
-            {/* Run Fix */}
-            <Button variant="accent" size="sm" isLoading={isRunning} onClick={onRunFix} className="gap-1.5">
-              <Play size={13} />
-              {isRunning ? 'Running…' : 'Run Fix'}
-            </Button>
           </div>
-
-          {/* Result feedback */}
-          {result && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="rounded-lg p-3 text-xs"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                background: 'var(--color-glass)',
-                border: '1px solid var(--color-glass-border)',
-                color: result.success ? 'var(--color-text-1)' : 'var(--color-text-2)',
-              }}
-            >
-              {result.success ? '✓ ' : '✗ '}{result.stdout || result.stderr}
-            </motion.div>
-          )}
         </>
       ) : (
         <p className="text-sm" style={{ color: 'var(--color-text-3)' }}>
