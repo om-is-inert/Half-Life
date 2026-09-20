@@ -66,7 +66,8 @@ export const ROOT_CAUSE_LABELS: Record<RootCause, string> = {
 
 // ── Recommended action labels ────────────────────────────────────────────────
 export const ACTION_LABELS: Record<RecommendedAction, string> = {
-  force_disable_package: 'Force Disable Package',
+  disable_package:       'Disable Package',
+  force_stop_package:    'Force Stop Package',
   replace_battery:       'Replace Battery',
   factory_reset:         'Factory Reset',
   clear_cache:           'Clear App Cache',

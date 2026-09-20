@@ -18,7 +18,8 @@ export type RootCause =
   | 'unknown';
 
 export type RecommendedAction =
-  | 'force_disable_package'
+  | 'disable_package'
+  | 'force_stop_package'
   | 'replace_battery'
   | 'factory_reset'
   | 'clear_cache'
@@ -30,6 +31,7 @@ export interface DiagnosisReport {
   device_id: string;
   created_at: string;       // ISO 8601
   completed_at: string;     // ISO 8601
+  connection_method: string;
 
   // Core metrics
   battery_health_pct: number | null;
