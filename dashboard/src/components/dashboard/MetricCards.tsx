@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { DiagnosisReport } from '../../types/dashboard';
 import {
@@ -100,8 +100,9 @@ function SeverityBadge({ report }: { report: DiagnosisReport }) {
   );
 }
 
-function ConfidenceBar({ confidence }: { confidence: number }) {
-  const pct = Math.round(confidence * 100);
+function ConfidenceBar({ confidence }: { confidence?: number }) {
+  const safeConfidence = confidence ?? 1.0; // Deterministic parser is 100% confident
+  const pct = Math.round(safeConfidence * 100);
 
   return (
     <div className="w-full flex flex-col items-center gap-3.5 px-3 py-2">
@@ -183,7 +184,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ report }) => {
   const cards = [
     { title: 'Battery Health', content: <BatteryGauge pct={report.battery_health_pct} /> },
     { title: 'Severity',       content: <SeverityBadge report={report} /> },
-    { title: 'Confidence',     content: <ConfidenceBar confidence={report.confidence} /> },
+    { title: 'Confidence',     content: <ConfidenceBar confidence={report.confidence ?? 1.0} /> },
     { title: 'Events',         content: <EventCounters report={report} /> },
   ];
 

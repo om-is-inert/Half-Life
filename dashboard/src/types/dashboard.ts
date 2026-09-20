@@ -30,7 +30,7 @@ export interface DiagnosisReport {
   battery_health_pct: number | null;
   severity: SeverityLevel;
   root_cause: RootCause;
-  confidence: number;       // 0.0–1.0
+  confidence?: number;       // 0.0-1.0 (Optional for deterministic parser)
 
   // Culprit
   offending_package: string | null;
@@ -49,8 +49,9 @@ export interface DiagnosisReport {
   evidence_snippets: string[];
 
   // Raw metadata
-  raw_size: number;         // bytes
-  chunk_count: number;
+  raw_size?: number;         // bytes
+  payload_size?: number;
+  chunk_count?: number;
   error?: string;
 }
 

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Copy, Check } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -23,8 +23,8 @@ export const DeviceInfo: React.FC<DeviceInfoProps> = ({ report }) => {
     ['Device Serial', report.device_id],
     ['Job ID',        report.jobId],
     ['Completed At',  formatDate(report.completed_at)],
-    ['Raw Log Size',  bytesToMB(report.raw_size)],
-    ['Chunk Count',   String(report.chunk_count)],
+    ['Raw Log Size',  bytesToMB(report.payload_size || report.raw_size || 0)],
+    ['Chunk Count',   String(report.chunk_count || 1)],
   ];
 
   return (
