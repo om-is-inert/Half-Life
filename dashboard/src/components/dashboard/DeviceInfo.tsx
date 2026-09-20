@@ -29,20 +29,19 @@ export const DeviceInfo: React.FC<DeviceInfoProps> = ({ report }) => {
 
   return (
     <motion.div
-      className="glass-card overflow-hidden"
+      className="border-b border-[var(--color-glass-border)] pb-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.3 }}
     >
       <button
-        className="w-full flex items-center justify-between p-12 sm:p-14 lg:p-16 text-left cursor-pointer transition-colors duration-150"
+        className="w-full flex items-center justify-between pb-6 pt-4 text-left cursor-pointer transition-colors duration-150"
         onClick={() => setIsOpen(v => !v)}
       >
         <span
-          className="text-[10px] font-semibold uppercase tracking-widest"
-          style={{ color: '#ffffff' }}
+          className="w-full text-[11px] font-mono font-semibold uppercase tracking-widest text-[var(--color-text-2)]"
         >
-          Device &amp; Diagnostics Metadata
+          09 DEVICE METADATA
         </span>
         <motion.span
           animate={{ rotate: isOpen ? 180 : 0 }}
@@ -63,7 +62,7 @@ export const DeviceInfo: React.FC<DeviceInfoProps> = ({ report }) => {
             className="overflow-hidden"
           >
             <div
-              className="px-12 sm:px-14 lg:px-16 pb-12 sm:pb-14 lg:pb-16 pt-6 border-t flex flex-col gap-6"
+              className="pb-10 pt-4 border-t flex flex-col gap-6"
               style={{ borderColor: 'var(--color-glass-border)' }}
             >
               {rows.map(([label, val]) => (

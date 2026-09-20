@@ -106,31 +106,22 @@ function SeverityBadge({ report }: { report: DiagnosisReport }) {
 }
 
 function ConfidenceBar({ confidence }: { confidence?: number }) {
-  const safeConfidence = confidence ?? 1.0; // Deterministic parser is 100% confident
+  const safeConfidence = confidence ?? 1.0;
   const pct = Math.round(safeConfidence * 100);
 
   return (
-    <div className="w-full flex flex-col items-center gap-3.5 px-3 py-2">
-      <span
-        className="text-3xl font-extrabold"
-        style={{ color: '#ffffff' }}
-      >
+    <div className="w-full flex flex-col items-start gap-2 py-2">
+      <span className="text-3xl font-extrabold" style={{ color: '#ffffff' }}>
         {pct}%
       </span>
 
-      <span
-        className="text-[10px] uppercase tracking-widest"
-        style={{ color: 'var(--color-text-2)' }}
-      >
+      <span className="text-[10px] uppercase tracking-widest text-[var(--color-text-2)] font-mono">
         AI Confidence
       </span>
 
-      <div
-        className="h-2 w-full rounded-full overflow-hidden mt-1.5"
-        style={{ background: 'hsla(0,0%,100%,0.07)' }}
-      >
+      <div className="h-1 w-full mt-2" style={{ background: 'var(--color-glass-border)' }}>
         <motion.div
-          className="h-full rounded-full"
+          className="h-full"
           style={{ background: 'var(--color-text-1)' }}
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
@@ -194,22 +185,23 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ report }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 sm:gap-9">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 pb-10 border-b border-[var(--color-glass-border)]">
       {cards.map((card, i) => (
         <motion.div
           key={card.title}
-          className="glass-card p-10 sm:p-12 lg:p-14 flex flex-col items-center gap-8 h-full"
+          className="flex flex-col items-start gap-6 h-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 200, delay: i * 0.06 }}
         >
           <h3
-            className="w-full text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: '#ffffff' }}
+            className="w-full text-[11px] font-mono font-semibold uppercase tracking-widest text-[var(--color-text-2)]"
           >
-            {card.title}
+            0{i + 1} {card.title}
           </h3>
-          {card.content}
+          <div className="w-full flex-1 flex flex-col justify-end">
+            {card.content}
+          </div>
         </motion.div>
       ))}
     </div>

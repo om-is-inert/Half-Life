@@ -25,23 +25,23 @@ export const FixCard: React.FC<FixCardProps> = ({ report, onRunFix }) => {
 
   return (
     <motion.div
-      className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8 h-full"
+      className="pb-10 lg:pr-10 border-b lg:border-b-0 lg:border-r border-[var(--color-glass-border)] flex flex-col gap-8 h-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.2 }}
     >
       <div className="flex items-center justify-between">
         <h3
-          className="text-[10px] font-semibold uppercase tracking-widest"
-          style={{ color: '#ffffff' }}
+          className="w-full text-[11px] font-mono font-semibold uppercase tracking-widest text-[var(--color-text-2)]"
         >
-          Recommended Fix
+          07 RECOMMENDED FIX
         </h3>
         <Badge
           style={{
-            background: 'var(--color-glass)',
+            background: 'transparent',
             border: '1px solid var(--color-glass-border)',
-            color: 'var(--color-text-1)',
+            color: 'var(--color-text-2)',
+            fontFamily: 'var(--font-mono)',
             fontSize: '0.72rem',
             padding: '6px 14px',
           }}
@@ -55,7 +55,7 @@ export const FixCard: React.FC<FixCardProps> = ({ report, onRunFix }) => {
         <button
           onClick={handleCopy}
           title="Copy command"
-          className="absolute top-3.5 right-3.5 p-3 rounded-lg glass-card text-xs transition-colors duration-150 cursor-pointer"
+          className="absolute top-3.5 right-3.5 p-3 rounded-lg border border-[var(--color-glass-border)] bg-black text-xs transition-colors duration-150 cursor-pointer"
           style={{ color: 'var(--color-text-2)', border: '1px solid var(--color-glass-border)' }}
           onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-text-1)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-2)')}
@@ -66,7 +66,7 @@ export const FixCard: React.FC<FixCardProps> = ({ report, onRunFix }) => {
 
       <div className="flex items-center gap-4 pt-1">
         <Button
-          variant="primary"
+          variant="outline"
           size="md"
           onClick={onRunFix}
           isLoading={isRunning}
@@ -84,7 +84,7 @@ export const FixCard: React.FC<FixCardProps> = ({ report, onRunFix }) => {
           className="rounded-xl p-6 text-xs"
           style={{
             fontFamily: 'var(--font-mono)',
-            background: 'var(--color-glass)',
+            background: 'transparent',
             border: '1px solid var(--color-glass-border)',
             color: result.success ? 'var(--color-text-1)' : 'var(--color-text-2)',
           }}

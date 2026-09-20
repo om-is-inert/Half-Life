@@ -14,26 +14,21 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
 
   return (
     <motion.div
-      className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8 h-full"
+      className="pb-10 lg:pr-10 border-b lg:border-b-0 lg:border-r border-[var(--color-glass-border)] flex flex-col gap-8 h-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.1 }}
     >
       <h3
-        className="text-[10px] font-semibold uppercase tracking-widest"
-        style={{ color: '#ffffff' }}
+        className="w-full text-[11px] font-mono font-semibold uppercase tracking-widest text-[var(--color-text-2)]"
       >
-        Identified Culprit
+        05 IDENTIFIED CULPRIT
       </h3>
 
       {hasCulprit ? (
         <div className="flex items-start gap-6 py-2">
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
-            style={{
-              background: 'var(--color-glass)',
-              border: '1px solid var(--color-glass-border)',
-            }}
+            className="w-14 h-14 rounded-none flex items-center justify-center shrink-0 border border-[var(--color-glass-border)]"
           >
             <Package size={22} style={{ color: 'var(--color-text-1)' }} />
           </div>
@@ -46,46 +41,10 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
               {offending_package ?? 'None detected'}
             </span>
 
-            <div className="flex flex-wrap gap-3">
-              {wakelock_offender && (
-                <Badge
-                  style={{
-                    color: 'var(--color-text-1)',
-                    background: 'var(--color-glass)',
-                    border: '1px solid var(--color-glass-border)',
-                    fontSize: '0.72rem',
-                    padding: '6px 14px',
-                  }}
-                >
-                  Wakelock Drain
-                </Badge>
-              )}
-              {cpu_offender && (
-                <Badge
-                  style={{
-                    color: 'var(--color-text-1)',
-                    background: 'var(--color-glass)',
-                    border: '1px solid var(--color-glass-border)',
-                    fontSize: '0.72rem',
-                    padding: '6px 14px',
-                  }}
-                >
-                  High CPU
-                </Badge>
-              )}
-              {(crash_count_24h ?? 0) > 0 && (
-                <Badge
-                  style={{
-                    color: 'var(--color-text-1)',
-                    background: 'var(--color-glass)',
-                    border: '1px solid var(--color-glass-border)',
-                    fontSize: '0.72rem',
-                    padding: '6px 14px',
-                  }}
-                >
-                  Recurring Crash
-                </Badge>
-              )}
+            <div className="flex flex-wrap gap-2 mt-1 text-xs font-mono text-[var(--color-text-2)]">
+              {wakelock_offender && <span className="border border-[var(--color-glass-border)] px-2 py-1">Wakelock</span>}
+              {cpu_offender && <span className="border border-[var(--color-glass-border)] px-2 py-1">High CPU</span>}
+              {(crash_count_24h ?? 0) > 0 && <span className="border border-[var(--color-glass-border)] px-2 py-1">Crash</span>}
             </div>
           </div>
         </div>

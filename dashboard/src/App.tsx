@@ -32,7 +32,7 @@ export default function App() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[var(--color-bg)] text-[var(--color-text-1)] relative">
       {/* Background Beams */}
       <div
-        className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0"
+        className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0 opacity-20"
         style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0 }}
         aria-hidden
       >
@@ -137,19 +137,13 @@ export default function App() {
                 <div className="flex gap-4 mt-2">
                   <button
                     onClick={retry}
-                    className="px-6 py-3 rounded-xl glass-card text-sm font-semibold transition-all duration-150"
-                    style={{ color: 'var(--color-text-1)', border: '1px solid var(--color-glass-border)' }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-text-3)')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-glass-border)')}
+                    className="px-6 py-3 border border-[var(--color-glass-border)] text-[var(--color-text-1)] text-sm font-semibold transition-all duration-150 hover:border-[var(--color-text-3)]"
                   >
                     Retry
                   </button>
                   <button
                     onClick={() => window.location.reload()}
-                    className="px-6 py-3 rounded-xl glass-card text-sm font-semibold transition-all duration-150"
-                    style={{ color: 'var(--color-text-1)', border: '1px solid var(--color-glass-border)' }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-text-3)')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-glass-border)')}
+                    className="px-6 py-3 border border-[var(--color-glass-border)] text-[var(--color-text-1)] text-sm font-semibold transition-all duration-150 hover:border-[var(--color-text-3)]"
                   >
                     Home
                   </button>
@@ -190,12 +184,9 @@ export default function App() {
                 <div className="flex justify-center pt-8">
                   <button
                     onClick={() => startPolling(report.jobId)}
-                    className="text-xs font-mono transition-colors duration-150 py-3 px-6 rounded-xl glass-card"
-                    style={{ color: 'var(--color-text-3)', border: '1px solid var(--color-glass-border)' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-text-1)')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-3)')}
+                    className="text-xs font-mono transition-colors duration-150 py-3 px-6 border border-[var(--color-glass-border)] text-[var(--color-text-3)] hover:text-[var(--color-text-1)] uppercase tracking-widest"
                   >
-                    ? Re-run diagnosis
+                    Re-run diagnosis
                   </button>
                 </div>
               </motion.div>

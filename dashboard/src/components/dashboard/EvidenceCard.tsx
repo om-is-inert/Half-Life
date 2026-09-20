@@ -18,16 +18,15 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ report }) => {
 
   return (
     <motion.div
-      className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8 h-full"
+      className="pb-10 border-b border-[var(--color-glass-border)] flex flex-col gap-8 h-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.25 }}
     >
       <h3
-        className="text-[10px] font-semibold uppercase tracking-widest"
-        style={{ color: '#ffffff' }}
+        className="w-full text-[11px] font-mono font-semibold uppercase tracking-widest text-[var(--color-text-2)]"
       >
-        Evidence from Logs
+        08 EVIDENCE FROM LOGS
       </h3>
 
       <div className="flex flex-col gap-6">
