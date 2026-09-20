@@ -144,6 +144,16 @@ Half-Life/
 
 ---
 
+## Privacy & Security
+
+Half-Life is built with strict privacy and operational controls to ensure diagnostic safety and transparency:
+- **No Personal Data Collection**: The tool only runs `dumpsys` commands to collect non-identifiable battery, CPU, and thermal metadata. It does not (and cannot) read photos, messages, contacts, or personal files.
+- **7-Day Retention (TTL)**: All diagnosis reports stored in DynamoDB automatically expire and are securely deleted 7 days after creation.
+- **Rate Limiting**: The API Gateway restricts the `/analyze` endpoint to 20 requests per second (with a burst limit of 40) to prevent accidental or malicious abuse.
+- **Payload Restrictions**: The backend Lambda drops any payload exceeding 5MB to protect against memory exhaustion.
+
+---
+
 ## Diagnosis JSON Schema
 
 ```json

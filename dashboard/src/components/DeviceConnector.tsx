@@ -323,6 +323,11 @@ export const DeviceConnector: React.FC<DeviceConnectorProps> = ({
           </motion.div>
         </AnimatePresence>
       </div>
+      
+      {/* Privacy Disclaimer */}
+      <p className="text-[10px] text-center max-w-sm mx-auto mt-2" style={{ color: 'var(--color-text-3)' }}>
+        🔒 <b>Privacy Disclaimer:</b> We only collect anonymized battery, CPU, and thermal metrics to perform this diagnosis. No personal data (photos, messages, contacts) is ever extracted or stored.
+      </p>
     </div>
   );
 };
