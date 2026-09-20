@@ -6,24 +6,25 @@
 
 ## Architecture
 
-```
-[Android Phone] -- WebUSB --> [Browser (React/Vite)]
-                                    │
-                                    │  1. Extract logs via dumpsys
-                                    │  2. Client-side pre-parsing
-                                    │  3. POST /analyze (JSON payload)
-                                    ▼
-                          [API Gateway]
-                                    │
-                                    ▼
-                 [Lambda: Analyze (Deterministic Parser)]
-                     (Evaluates rules in < 100ms)
-                                    │
-                                    ▼
-                    [DynamoDB: HalfLifeJobs]
-                                    │
-                                    ▼
-                     [Browser (Dashboard UI)]
+```mermaid
+sequenceDiagram
+    participant Phone as Android Phone
+    participant Browser as Browser (React/Vite)
+    participant API as API Gateway
+    participant Lambda as Lambda (Parser)
+    participant Dynamo as DynamoDB
+
+    Phone->>Browser: WebUSB Connect
+    Browser->>Phone: Extract logs (dumpsys)
+    Phone-->>Browser: Raw Text Output
+    Note over Browser: Client-side pre-parsing
+    Browser->>API: POST /analyze (JSON payload)
+    API->>Lambda: Trigger
+    Note over Lambda: Evaluates rules deterministically in < 100ms
+    Lambda->>Dynamo: Persist Job (7-day TTL)
+    Lambda-->>API: 200 OK + Diagnosis
+    API-->>Browser: DiagnosisReport
+    Browser->>Browser: Render Dashboard UI
 ```
 
 ---
