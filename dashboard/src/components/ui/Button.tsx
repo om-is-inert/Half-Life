@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -30,9 +30,9 @@ const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
 };
 
 const sizeStyles: Record<NonNullable<ButtonProps['size']>, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2.5 text-sm',
-  lg: 'px-6 py-4 text-base',
+  sm: 'px-5 py-2.5 text-xs',
+  md: 'px-6 py-3.5 text-sm',
+  lg: 'px-8 py-4.5 text-base',
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -49,7 +49,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       whileTap={{ scale: 0.97 }}
       transition={{ type: 'spring', damping: 24, stiffness: 200 }}
       className={cn(
-        'relative inline-flex items-center justify-center gap-2 rounded-lg',
+        'relative inline-flex items-center justify-center gap-2.5 rounded-xl',
         'transition-all duration-150 cursor-pointer select-none',
         'disabled:opacity-35 disabled:cursor-not-allowed disabled:pointer-events-none',
         variantStyles[variant],

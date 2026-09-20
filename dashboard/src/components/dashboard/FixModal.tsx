@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+﻿import React, { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -27,14 +26,14 @@ export const FixModal: React.FC<FixModalProps> = ({ isOpen, onClose, adbCommand,
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6 p-2 sm:p-3">
         {/* Warning heading */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3.5">
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)' }}
           >
-            <AlertTriangle size={16} style={{ color: 'var(--color-text-2)' }} />
+            <AlertTriangle size={18} style={{ color: 'var(--color-text-2)' }} />
           </div>
           <div>
             <h2
@@ -44,7 +43,7 @@ export const FixModal: React.FC<FixModalProps> = ({ isOpen, onClose, adbCommand,
               Run ADB Command?
             </h2>
             <p
-              className="text-xs"
+              className="text-xs mt-0.5"
               style={{ color: 'var(--color-text-3)' }}
             >
               This will execute directly on the connected device.
@@ -52,15 +51,15 @@ export const FixModal: React.FC<FixModalProps> = ({ isOpen, onClose, adbCommand,
           </div>
         </div>
 
-        <p className="text-sm" style={{ color: 'var(--color-text-2)' }}>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-2)' }}>
           The following ADB command will be sent via the Half-Life API. Ensure your device is
           connected and USB debugging is enabled before proceeding.
         </p>
 
         <CodeBlock code={adbCommand} />
 
-        <div className="flex gap-3 justify-end pt-1">
-          <Button variant="secondary" size="md" onClick={onClose} disabled={isRunning}>
+        <div className="flex gap-3.5 justify-end pt-2">
+          <Button variant="secondary" size="md" onClick={onClose} disabled={isRunning} className="px-6 py-3">
             Cancel
           </Button>
           <Button
@@ -68,6 +67,7 @@ export const FixModal: React.FC<FixModalProps> = ({ isOpen, onClose, adbCommand,
             size="md"
             isLoading={isRunning}
             onClick={handleConfirm}
+            className="px-7 py-3"
           >
             {isRunning ? 'Running…' : 'Yes, Run It'}
           </Button>

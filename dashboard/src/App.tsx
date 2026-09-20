@@ -1,208 +1,189 @@
+﻿import Beams from './components/Beams';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAnalysis } from './hooks/useAnalysis';
-import { DeviceConnector } from './components/DeviceConnector';
+import { useJobPolling } from './hooks/useJobPolling';
+import { JobLookup } from './components/dashboard/JobLookup';
 import { StatusLoader } from './components/dashboard/StatusLoader';
 import { MetricCards } from './components/dashboard/MetricCards';
 import { CulpritCard } from './components/dashboard/CulpritCard';
 import { DiagnosisCard } from './components/dashboard/DiagnosisCard';
 import { FixCard } from './components/dashboard/FixCard';
+import { FixModal } from './components/dashboard/FixModal';
 import { EvidenceCard } from './components/dashboard/EvidenceCard';
 import { DeviceInfo } from './components/dashboard/DeviceInfo';
-import { Navbar } from './components/layout/Navbar';
-import { BackgroundOrbs } from './components/layout/BackgroundOrbs';
 import { Footer } from './components/layout/Footer';
-import Grainient from './components/ui/Grainient';
 import { formatDate } from './lib/utils';
-import type { DeviceSession } from './types/dashboard';
 
 export default function App() {
-  const { state, analyzeWebUsb, analyzePaste, analyzeJobId, reset } = useAnalysis();
-  const [connectedDevice, setConnectedDevice] = useState<DeviceSession | null>(null);
+  const { state, startPolling, retry } = useJobPolling();
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const { status, report, elapsedSeconds } = state;
+  const { status, report, elapsedSeconds, isPolling } = state;
 
-  // Map new AnalysisStatus to the StatusLoader's expected JobStatus
-  const statusForLoader = ((): 'PENDING' | 'PROCESSING' | 'FORMATTING' | 'COMPLETE' | 'FAILED' => {
-    if (status === 'IDLE' || status === 'CONNECTING') return 'PENDING';
-    if (status === 'READING')    return 'PROCESSING';
-    if (status === 'ANALYSING')  return 'FORMATTING';
-    if (status === 'COMPLETE')   return 'COMPLETE';
-    return 'FAILED';
-  })();
-
-  const isHomePage = status === 'IDLE';
-  const isWorking  = status === 'READING' || status === 'ANALYSING' || status === 'CONNECTING';
-  const isLoading  = isWorking;
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleDeviceConnected = async (session: DeviceSession) => {
-    setConnectedDevice(session);
-    await analyzeWebUsb(session);
+  const handleAdbConfirm = async () => {
+    await new Promise(r => setTimeout(r, 1800));
   };
+
+  const isHomePage = !isPolling && status === 'PENDING' && !report;
+  const isCenteredLayout = isHomePage || isPolling || status === 'FAILED';
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[var(--color-bg)] text-[var(--color-text-1)] relative">
-      <BackgroundOrbs />
+      {/* Background Beams */}
+      <div
+        className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0"
+        style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0 }}
+        aria-hidden
+      >
+        <Beams
+          beamWidth={2}
+          beamHeight={15}
+          beamNumber={12}
+          lightColor="#ffffff"
+          speed={2}
+          noiseIntensity={1.75}
+          scale={0.2}
+          rotation={0}
+        />
+      </div>
 
-      {/* Navbar */}
-      <Navbar
-        isOnline
-        deviceId={connectedDevice?.serial ?? report?.device_id}
-        jobId={report?.jobId}
-        timestamp={report ? formatDate(report.created_at) : undefined}
-      />
-
-      {/* Scrollable body */}
-      <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center relative">
-
-        {/* Grainient hero on home */}
+      {/* Home Page Logo */}
+      <AnimatePresence>
         {isHomePage && (
-          <div
-            className="pointer-events-none absolute top-0 left-0 w-full overflow-hidden"
-            style={{ width: '100%', height: '600px', position: 'absolute', zIndex: 0 }}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute top-8 left-8 sm:top-12 sm:left-12 z-50 pointer-events-none"
           >
-            <div className="absolute inset-0">
-              <Grainient
-                color1="#1c1c1c"
-                color2="#3e3e3e"
-                color3="#959595"
-                timeSpeed={0.9}
-                colorBalance={0.1}
-                warpStrength={0.95}
-                warpFrequency={2.7}
-                warpSpeed={1.1}
-                warpAmplitude={24}
-                blendAngle={0.0}
-                blendSoftness={0.4}
-                rotationAmount={740}
-                noiseScale={1.9}
-                grainAmount={0.4}
-                grainScale={3}
-                grainAnimated={false}
-                contrast={1.25}
-                gamma={0.55}
-                saturation={0.4}
-                centerX={0.0}
-                centerY={-0.19}
-                zoom={0.5}
-              />
-            </div>
-          </div>
+            <img src="/logo.png" alt="HalfLife Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain opacity-90" />
+          </motion.div>
         )}
+      </AnimatePresence>
 
+      {/* Main container */}
+      <div
+        className={`w-full flex flex-col items-center relative ${
+          isCenteredLayout
+            ? 'h-full flex-1 justify-center overflow-y-auto overflow-x-hidden'
+            : 'flex-1 overflow-y-auto overflow-x-hidden'
+        }`}
+      >
         <main
-          className={`w-full flex-1 flex flex-col items-center relative z-10 ${
-            isHomePage
-              ? 'min-h-[calc(100vh-4rem)] justify-center py-0 px-4 sm:px-6'
-              : 'py-8 px-4 sm:px-6 lg:px-8'
+          className={`w-full flex flex-col items-center relative z-10 ${
+            isCenteredLayout
+              ? 'h-full flex-1 justify-center py-0 px-4 sm:px-6'
+              : 'py-14 sm:py-20 px-6 sm:px-10 lg:px-12'
           }`}
         >
-          {/* ── Home: Device Connector ─────────────────────────────────────── */}
+          {/* Job Lookup Hero */}
           <AnimatePresence mode="wait">
             {isHomePage && (
               <motion.div
-                key="connector"
-                className="w-full max-w-lg flex flex-col items-center my-auto"
+                key="lookup"
+                className="w-full max-w-xl flex flex-col items-center justify-center my-auto"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25 }}
               >
-                <DeviceConnector
-                  analysisStatus={status}
-                  onDeviceConnected={handleDeviceConnected}
-                  onPasteSubmit={analyzePaste}
-                  onJobId={analyzeJobId}
-                />
+                <JobLookup onSubmit={startPolling} isLoading={false} />
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* ── Status Loader ─────────────────────────────────────────────── */}
+          {/* Status Loader - Center aligned vertically and horizontally */}
           <AnimatePresence mode="wait">
-            {isLoading && (
+            {isPolling && (
               <motion.div
                 key="loader"
-                className="w-full max-w-2xl my-auto"
+                className="w-full max-w-2xl flex flex-col items-center justify-center my-auto py-10"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
               >
                 <StatusLoader
-                  status={statusForLoader}
-                  jobId={connectedDevice?.serial ?? ''}
+                  status={status}
+                  jobId={state.report?.jobId ?? ''}
                   elapsedSeconds={elapsedSeconds}
                 />
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* ── Error / Failed ─────────────────────────────────────────────── */}
+          {/* Error / Failed State */}
           <AnimatePresence mode="wait">
             {status === 'FAILED' && (
               <motion.div
                 key="error"
-                className="w-full max-w-2xl my-auto flex flex-col items-center gap-5 py-16 text-center"
+                className="w-full max-w-2xl my-auto flex flex-col items-center justify-center gap-7 py-16 px-8 sm:px-12 text-center"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 200 }}
               >
-                <span className="text-5xl">🚨</span>
+                <span className="text-5xl">??</span>
                 <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-1)' }}>
-                  Analysis Failed
+                  Diagnosis Failed
                 </h2>
                 <p className="text-sm max-w-sm" style={{ color: 'var(--color-text-2)' }}>
-                  {state.error ?? 'An unknown error occurred.'}
+                  {state.error ?? 'An unknown error occurred during processing.'}
+                </p>
+                <p className="text-xs font-mono" style={{ color: 'var(--color-text-3)' }}>
+                  Check CloudWatch logs for Lambda errors
                 </p>
                 <button
-                  onClick={reset}
-                  className="px-5 py-2.5 rounded-lg glass-card text-sm font-semibold transition-all duration-150"
+                  onClick={retry}
+                  className="px-6 py-3 rounded-xl glass-card text-sm font-semibold transition-all duration-150"
                   style={{ color: 'var(--color-text-1)', border: '1px solid var(--color-glass-border)' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-text-3)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-glass-border)')}
                 >
-                  ↩ Try Again
+                  ? Retry
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* ── Full Report ───────────────────────────────────────────────── */}
+          {/* Full Diagnosis Report */}
           <AnimatePresence>
             {status === 'COMPLETE' && report && (
               <motion.div
                 key="report"
-                className="w-full max-w-5xl flex flex-col gap-5 pb-10"
+                className="w-full max-w-5xl flex flex-col gap-10 pb-20 pt-4"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 180 }}
               >
+                {/* Metric Cards Row */}
                 <MetricCards report={report} />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Second Row: Culprit + AI Diagnosis */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                   <CulpritCard report={report} />
                   <DiagnosisCard report={report} />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <FixCard report={report} />
+                {/* Third Row: Fix + Evidence */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                  <FixCard report={report} onRunFix={() => setModalOpen(true)} />
                   <EvidenceCard report={report} />
                 </div>
 
+                {/* Fourth Row: Device & Diagnostic Metadata */}
                 <DeviceInfo report={report} />
 
-                <div className="flex justify-center pt-4">
+                {/* Re-diagnose CTA */}
+                <div className="flex justify-center pt-8">
                   <button
-                    onClick={reset}
-                    className="text-xs font-mono transition-colors duration-150"
-                    style={{ color: 'var(--color-text-3)' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-text-2)')}
+                    onClick={() => startPolling(report.jobId)}
+                    className="text-xs font-mono transition-colors duration-150 py-3 px-6 rounded-xl glass-card"
+                    style={{ color: 'var(--color-text-3)', border: '1px solid var(--color-glass-border)' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-text-1)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-3)')}
                   >
-                    ↩ Analyse another device
+                    ? Re-run diagnosis
                   </button>
                 </div>
               </motion.div>
@@ -210,8 +191,16 @@ export default function App() {
           </AnimatePresence>
         </main>
 
-        <Footer className={isHomePage ? 'absolute bottom-0 w-full border-t border-[var(--color-glass-border)]/40' : 'mt-20'} />
+        <Footer className={isCenteredLayout ? 'absolute bottom-0 w-full border-t border-[var(--color-glass-border)]/40' : 'mt-16'} />
       </div>
+
+      {/* ADB Confirmation Modal */}
+      <FixModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        adbCommand={report?.adb_command ?? ''}
+        onConfirm={handleAdbConfirm}
+      />
     </div>
   );
 }

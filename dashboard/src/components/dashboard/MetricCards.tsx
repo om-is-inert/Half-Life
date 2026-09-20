@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import type { DiagnosisReport } from '../../types/dashboard';
 import {
@@ -11,7 +11,6 @@ interface MetricCardsProps {
   report: DiagnosisReport;
 }
 
-// ── Battery Arc Gauge ─────────────────────────────────────────────────────────
 const ARC_R            = 54;
 const ARC_CX           = 70;
 const ARC_CY           = 70;
@@ -25,9 +24,8 @@ function BatteryGauge({ pct }: { pct: number | null }) {
     : ARC_CIRCUMFERENCE * (1 - pct / 100);
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3.5 py-2">
       <svg width="140" height="90" viewBox="0 0 140 90" role="img" aria-label={`Battery health: ${pct ?? 'unknown'}%`}>
-        {/* Track */}
         <path
           d={`M ${ARC_CX - ARC_R} ${ARC_CY} A ${ARC_R} ${ARC_R} 0 0 1 ${ARC_CX + ARC_R} ${ARC_CY}`}
           fill="none"
@@ -35,7 +33,6 @@ function BatteryGauge({ pct }: { pct: number | null }) {
           strokeWidth="9"
           strokeLinecap="round"
         />
-        {/* Fill arc */}
         <path
           d={`M ${ARC_CX - ARC_R} ${ARC_CY} A ${ARC_R} ${ARC_R} 0 0 1 ${ARC_CX + ARC_R} ${ARC_CY}`}
           fill="none"
@@ -46,7 +43,6 @@ function BatteryGauge({ pct }: { pct: number | null }) {
           strokeDashoffset={dashOffset}
           style={{ transition: 'stroke-dashoffset 1.2s ease-in-out, stroke 0.4s ease' }}
         />
-        {/* Value */}
         <text
           x={ARC_CX}
           y={ARC_CY - 6}
@@ -60,7 +56,7 @@ function BatteryGauge({ pct }: { pct: number | null }) {
         </text>
       </svg>
       <span
-        className="text-[10px] font-semibold uppercase tracking-widest"
+        className="text-[11px] font-semibold tracking-wider uppercase"
         style={{ color }}
       >
         {label}
@@ -69,87 +65,83 @@ function BatteryGauge({ pct }: { pct: number | null }) {
   );
 }
 
-// ── Severity Badge ────────────────────────────────────────────────────────────
 function SeverityBadge({ report }: { report: DiagnosisReport }) {
   const cfg = SEVERITY_CONFIG[report.severity];
+
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-4 py-2">
       <motion.div
-        className="px-6 py-2 rounded-full text-xl font-extrabold border tracking-wide"
+        className="px-6 py-2.5 rounded-full font-bold tracking-widest uppercase flex items-center gap-2.5 text-xs"
         style={{
           color: cfg.color,
           background: cfg.bg,
-          borderColor: cfg.border,
+          border: `1px solid ${cfg.border}`,
         }}
-        initial={{ scale: 0.85, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', damping: 20, stiffness: 220, delay: 0.1 }}
+        initial={{ scale: 0.85 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
       >
-        {cfg.label.toUpperCase()}
+        <span
+          className="w-2 h-2 rounded-full animate-pulse"
+          style={{ background: cfg.color }}
+        />
+        {cfg.label}
       </motion.div>
+
       <span
-        className="text-[10px] uppercase tracking-widest text-center"
-        style={{ color: 'var(--color-text-3)' }}
+        className="text-[11px] text-center max-w-[170px] leading-relaxed"
+        style={{ color: 'var(--color-text-2)' }}
       >
-        {report.root_cause.replace(/_/g, ' ')}
+        {report.severity === 'CRITICAL' && 'Immediate intervention required'}
+        {report.severity === 'HIGH'     && 'Performance degradation detected'}
+        {(report.severity === 'MEDIUM' || report.severity === 'LOW') && 'All systems within normal bounds'}
       </span>
     </div>
   );
 }
 
-// ── Battery Capacity Bar (replaces LLM confidence) ────────────────────────────
-function BatteryCapacityBar({ report }: { report: DiagnosisReport }) {
-  const estimated = report.estimated_capacity_mah;
-  const design    = report.design_capacity_mah;
-  const pct       = report.battery_health_pct;
-  const fillColor = getBatteryColor(pct);
-  const fillWidth = pct !== null ? `${Math.min(pct, 100)}%` : '0%';
+function ConfidenceBar({ confidence }: { confidence: number }) {
+  const pct = Math.round(confidence * 100);
 
   return (
-    <div className="w-full flex flex-col gap-3">
-      <div className="flex justify-between items-baseline">
-        <span
-          className="text-[10px] font-semibold uppercase tracking-widest"
-          style={{ color: 'var(--color-text-3)' }}
-        >
-          Capacity
-        </span>
-        <span
-          className="text-2xl font-extrabold"
-          style={{ color: fillColor }}
-        >
-          {estimated !== null ? `${estimated} mAh` : '—'}
-        </span>
-      </div>
-      {/* Track */}
+    <div className="w-full flex flex-col items-center gap-3.5 px-3 py-2">
+      <span
+        className="text-3xl font-extrabold"
+        style={{ color: '#ffffff' }}
+      >
+        {pct}%
+      </span>
+
+      <span
+        className="text-[10px] uppercase tracking-widest"
+        style={{ color: 'var(--color-text-2)' }}
+      >
+        AI Confidence
+      </span>
+
       <div
-        className="h-1.5 w-full rounded-full overflow-hidden"
+        className="h-2 w-full rounded-full overflow-hidden mt-1.5"
         style={{ background: 'hsla(0,0%,100%,0.07)' }}
       >
         <motion.div
           className="h-full rounded-full"
-          style={{ background: fillColor }}
+          style={{ background: 'var(--color-text-1)' }}
           initial={{ width: 0 }}
-          animate={{ width: fillWidth }}
+          animate={{ width: `${pct}%` }}
           transition={{ duration: 1.1, ease: 'easeInOut', delay: 0.15 }}
         />
       </div>
-      <p className="text-[10px]" style={{ color: 'var(--color-text-3)' }}>
-        {design !== null ? `Design: ${design} mAh` : 'Design capacity unknown'}
-      </p>
     </div>
   );
 }
 
-
-// ── Event Counters ────────────────────────────────────────────────────────────
 function EventCounters({ report }: { report: DiagnosisReport }) {
   return (
-    <div className="flex items-center justify-around w-full gap-4">
-      <div className="flex flex-col items-center gap-1.5">
+    <div className="flex items-center justify-around w-full gap-6 py-3">
+      <div className="flex flex-col items-center gap-2">
         <motion.span
           className="text-4xl font-extrabold"
-          style={{ color: 'var(--color-text-1)' }}
+          style={{ color: '#ffffff' }}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -157,19 +149,19 @@ function EventCounters({ report }: { report: DiagnosisReport }) {
           {report.crash_count_24h ?? '—'}
         </motion.span>
         <span
-          className="text-[10px] uppercase tracking-widest"
-          style={{ color: 'var(--color-text-3)' }}
+          className="text-[10px] uppercase tracking-widest text-center"
+          style={{ color: 'var(--color-text-2)' }}
         >
           Crashes / 24h
         </span>
       </div>
 
-      <div className="w-px h-10" style={{ background: 'var(--color-glass-border)' }} />
+      <div className="w-px h-14" style={{ background: 'var(--color-glass-border)' }} />
 
-      <div className="flex flex-col items-center gap-1.5">
+      <div className="flex flex-col items-center gap-2">
         <motion.span
           className="text-4xl font-extrabold"
-          style={{ color: 'var(--color-text-2)' }}
+          style={{ color: 'var(--color-text-1)' }}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -177,8 +169,8 @@ function EventCounters({ report }: { report: DiagnosisReport }) {
           {report.thermal_events ?? '—'}
         </motion.span>
         <span
-          className="text-[10px] uppercase tracking-widest"
-          style={{ color: 'var(--color-text-3)' }}
+          className="text-[10px] uppercase tracking-widest text-center"
+          style={{ color: 'var(--color-text-2)' }}
         >
           Thermal Events
         </span>
@@ -187,28 +179,27 @@ function EventCounters({ report }: { report: DiagnosisReport }) {
   );
 }
 
-// ── MetricCards orchestrator ──────────────────────────────────────────────────
 export const MetricCards: React.FC<MetricCardsProps> = ({ report }) => {
   const cards = [
     { title: 'Battery Health', content: <BatteryGauge pct={report.battery_health_pct} /> },
     { title: 'Severity',       content: <SeverityBadge report={report} /> },
-    { title: 'Capacity',       content: <BatteryCapacityBar report={report} /> },
+    { title: 'Confidence',     content: <ConfidenceBar confidence={report.confidence} /> },
     { title: 'Events',         content: <EventCounters report={report} /> },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 sm:gap-9">
       {cards.map((card, i) => (
         <motion.div
           key={card.title}
-          className="glass-card p-6 flex flex-col items-center gap-5"
+          className="glass-card p-10 sm:p-12 lg:p-14 flex flex-col items-center gap-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 200, delay: i * 0.06 }}
         >
           <h3
             className="w-full text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: 'var(--color-text-3)' }}
+            style={{ color: '#ffffff' }}
           >
             {card.title}
           </h3>

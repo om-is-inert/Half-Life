@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { cn } from '../../lib/utils';
 
 interface CodeBlockProps {
@@ -16,13 +16,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 }) => (
   <pre
     className={cn(
-      'font-mono text-[0.8rem] leading-relaxed p-3 rounded-lg overflow-x-auto',
+      'font-mono text-[0.82rem] leading-relaxed p-4 sm:p-5 rounded-xl overflow-x-auto',
       accentLeft && 'border-l-2',
       className,
     )}
     style={{
-      background: 'hsla(0,0%,0%,0.5)',
-      color: 'var(--color-text-2)',
+      background: 'hsla(0,0%,0%,0.55)',
+      color: 'var(--color-text-1)',
       border: '1px solid var(--color-glass-border)',
       ...(accentLeft ? { borderLeftColor: accentColor, borderLeftWidth: '2px' } : {}),
     }}

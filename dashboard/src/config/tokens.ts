@@ -27,7 +27,6 @@ export const SEVERITY_CONFIG: Record<SeverityLevel, {
   MEDIUM:   { color: 'var(--color-warning)',  bg: 'var(--color-warning-bg)',  border: 'var(--color-warning-border)',  label: 'Medium' },
   HIGH:     { color: 'var(--color-error)',    bg: 'var(--color-error-bg)',    border: 'var(--color-error-border)',    label: 'High' },
   CRITICAL: { color: 'var(--color-critical)', bg: 'var(--color-critical-bg)', border: 'var(--color-critical-border)', label: 'Critical' },
-  UNKNOWN:  { color: 'var(--color-text-3)',   bg: 'var(--color-glass)',       border: 'var(--color-glass-border)',    label: 'Unknown' },
 };
 
 // ── Battery health thresholds ───────────────────────────────────────────────
@@ -57,20 +56,17 @@ export const ROOT_CAUSE_LABELS: Record<RootCause, string> = {
   thermal_throttling:  'Thermal Throttling',
   memory_leak:         'Memory Leak',
   kernel_panic:        'Kernel Panic',
-  insufficient_data:   'Insufficient Data',
-  normal:              'Healthy',
   unknown:             'Unknown',
 };
 
 // ── Recommended action labels ────────────────────────────────────────────────
 export const ACTION_LABELS: Record<RecommendedAction, string> = {
-  force_stop_package: 'Force Stop Package',
-  disable_package:    'Disable Package',
-  replace_battery:    'Replace Battery',
-  factory_reset:      'Factory Reset',
-  clear_cache:        'Clear App Cache',
-  update_firmware:    'Update Firmware',
-  none:               'No Action Required',
+  force_disable_package: 'Force Disable Package',
+  replace_battery:       'Replace Battery',
+  factory_reset:         'Factory Reset',
+  clear_cache:           'Clear App Cache',
+  update_firmware:       'Update Firmware',
+  none:                  'No Action Required',
 };
 
 // ── Polling config ───────────────────────────────────────────────────────────

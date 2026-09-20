@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Copy, Check } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { DiagnosisReport } from '../../types/dashboard';
-import { formatDate } from '../../lib/utils';
+import { bytesToMB, formatDate } from '../../lib/utils';
 
 interface DeviceInfoProps {
   report: DiagnosisReport;
@@ -23,6 +23,8 @@ export const DeviceInfo: React.FC<DeviceInfoProps> = ({ report }) => {
     ['Device Serial', report.device_id],
     ['Job ID',        report.jobId],
     ['Completed At',  formatDate(report.completed_at)],
+    ['Raw Log Size',  bytesToMB(report.raw_size)],
+    ['Chunk Count',   String(report.chunk_count)],
   ];
 
   return (
@@ -32,74 +34,72 @@ export const DeviceInfo: React.FC<DeviceInfoProps> = ({ report }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.3 }}
     >
-      {/* Toggle header */}
       <button
-        className="w-full flex items-center justify-between p-6 text-left cursor-pointer transition-colors duration-150"
+        className="w-full flex items-center justify-between p-12 sm:p-14 lg:p-16 text-left cursor-pointer transition-colors duration-150"
         onClick={() => setIsOpen(v => !v)}
-        aria-expanded={isOpen}
-        style={{ background: 'transparent' }}
-        onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-glass-hover)')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
       >
         <span
           className="text-[10px] font-semibold uppercase tracking-widest"
-          style={{ color: 'var(--color-text-3)' }}
+          style={{ color: '#ffffff' }}
         >
-          Device Info
+          Device &amp; Diagnostics Metadata
         </span>
-        <motion.div
+        <motion.span
           animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ type: 'spring', damping: 24, stiffness: 200 }}
+          transition={{ duration: 0.2 }}
+          style={{ color: 'var(--color-text-2)' }}
         >
-          <ChevronDown size={15} style={{ color: 'var(--color-text-3)' }} />
-        </motion.div>
+          <ChevronDown size={18} />
+        </motion.span>
       </button>
 
-      {/* Drawer */}
-      <AnimatePresence initial={false}>
+      <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 220 }}
+            transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
             <div
-              className="px-6 pb-6 flex flex-col gap-4"
-              style={{ borderTop: '1px solid var(--color-glass-border)' }}
+              className="px-12 sm:px-14 lg:px-16 pb-12 sm:pb-14 lg:pb-16 pt-6 border-t flex flex-col gap-6"
+              style={{ borderColor: 'var(--color-glass-border)' }}
             >
-              <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {rows.map(([label, value]) => (
-                  <div key={label} className="flex flex-col gap-1">
-                    <span
-                      className="text-[10px] uppercase tracking-widest"
-                      style={{ color: 'var(--color-text-3)' }}
-                    >
-                      {label}
+              {rows.map(([label, val]) => (
+                <div key={label} className="flex justify-between items-center text-xs py-3.5 border-b border-[var(--color-glass-border)]/30 last:border-b-0">
+                  <span style={{ color: 'var(--color-text-2)' }}>{label}</span>
+                  <div className="flex items-center gap-3">
+                    <span style={{ fontFamily: 'var(--font-mono)', color: '#ffffff' }}>
+                      {val}
                     </span>
-                    <span
-                      className="text-xs truncate"
-                      style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-2)' }}
-                    >
-                      {value}
-                    </span>
+                    {label === 'Job ID' && (
+                      <button
+                        onClick={handleCopyJobId}
+                        title="Copy Job ID"
+                        className="p-2 rounded-lg text-xs transition-colors duration-150 cursor-pointer"
+                        style={{ color: 'var(--color-text-2)', background: 'var(--color-glass)' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-text-1)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-2)')}
+                      >
+                        {copied ? <Check size={12} /> : <Copy size={12} />}
+                      </button>
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopyJobId}
-                className="self-start gap-1.5"
-              >
-                {copied
-                  ? <Check size={12} style={{ color: 'var(--color-text-1)' }} />
-                  : <Copy size={12} />
-                }
-                {copied ? 'Copied ✓' : 'Copy Job ID'}
-              </Button>
+              <div className="pt-4">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => window.print()}
+                  className="rounded-xl px-8 py-4"
+                  style={{ fontSize: '0.8rem' }}
+                >
+                  Print Report
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { CodeBlock } from '../ui/CodeBlock';
 import type { DiagnosisReport } from '../../types/dashboard';
@@ -7,7 +7,6 @@ interface EvidenceCardProps {
   report: DiagnosisReport;
 }
 
-// Monochrome accent steps: bright → mid → dim
 const ACCENT_COLORS = [
   'hsla(0,0%,100%,0.30)',
   'hsla(0,0%,100%,0.18)',
@@ -19,26 +18,25 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ report }) => {
 
   return (
     <motion.div
-      className="glass-card p-6 flex flex-col gap-5"
+      className="glass-card p-12 sm:p-14 lg:p-16 flex flex-col gap-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 200, delay: 0.25 }}
     >
       <h3
         className="text-[10px] font-semibold uppercase tracking-widest"
-        style={{ color: 'var(--color-text-3)' }}
+        style={{ color: '#ffffff' }}
       >
         Evidence from Logs
       </h3>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-6">
         {report.evidence_snippets.slice(0, 3).map((snippet, i) => (
           <CodeBlock
             key={i}
             code={snippet}
             accentLeft
             accentColor={ACCENT_COLORS[i]}
-            className="text-[0.76rem]"
           />
         ))}
       </div>
