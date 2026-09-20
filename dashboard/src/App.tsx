@@ -55,9 +55,10 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute top-8 left-8 sm:top-12 sm:left-12 z-50 pointer-events-none"
+            className="absolute top-8 left-8 sm:top-12 sm:left-12 z-50 pointer-events-none flex items-center gap-3"
           >
-            <img src="/logo.png" alt="HalfLife Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain opacity-90" />
+            <img src="/logo.png" alt="HalfLife Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain opacity-90" />
+            <span className="font-bold text-lg tracking-wide" style={{ color: 'var(--color-text-1)' }}>Half Life</span>
           </motion.div>
         )}
       </AnimatePresence>

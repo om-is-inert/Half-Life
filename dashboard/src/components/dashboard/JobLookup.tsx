@@ -147,6 +147,25 @@ export const JobLookup: React.FC<JobLookupProps> = ({ onSubmit, isLoading }) => 
             </div>
           </GlassSurface>
         </motion.button>
+
+        <div className="w-full pt-2">
+          <select
+            className="w-full bg-transparent border border-[var(--color-glass-border)] text-[11px] text-[var(--color-text-2)] px-3 py-2 outline-none cursor-pointer uppercase tracking-widest"
+            style={{ fontFamily: 'var(--font-mono)' }}
+            onChange={(e) => {
+              if (e.target.value) {
+                setValue(e.target.value);
+              }
+            }}
+            value=""
+          >
+            <option value="" disabled>Select a Demo Job ID...</option>
+            <option value="83cd22b6-5f6d-457e-af9c-f101a156281a">Normal Device</option>
+            <option value="04ed16c3-ff80-44dc-aabb-491861ee654c">Rogue App Drain</option>
+            <option value="50ff14e3-8212-4191-897b-a171ace1fbef">Thermal Overheating</option>
+            <option value="33f17ecb-2801-44ea-ae7c-771846fc01f3">Degraded Battery</option>
+          </select>
+        </div>
       </form>
 
       <div

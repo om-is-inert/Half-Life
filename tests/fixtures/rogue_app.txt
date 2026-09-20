@@ -16,7 +16,7 @@ Current Battery Service state:
   Wakelock com.facebook.appmanager: 11h 48m 11s realtime
 
 CPU usage from 24h ago:
-  com.facebook.katana: 38% user + 12% kernel
+  85% com.facebook.katana: 70% user + 15% kernel
   com.android.phone: 2% user + 1% kernel
   system: 1% user + 1% kernel
 
