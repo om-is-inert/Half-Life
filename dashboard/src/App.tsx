@@ -1,6 +1,7 @@
-﻿import Beams from './components/Beams';
+import Beams from './components/Beams';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AlertCircle } from 'lucide-react';
 import { useJobPolling } from './hooks/useJobPolling';
 import { JobLookup } from './components/dashboard/JobLookup';
 import { StatusLoader } from './components/dashboard/StatusLoader';
@@ -123,7 +124,7 @@ export default function App() {
                 exit={{ opacity: 0 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 200 }}
               >
-                <span className="text-5xl">??</span>
+                <AlertCircle size={48} className="text-[var(--color-text-2)]" />
                 <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-1)' }}>
                   Diagnosis Failed
                 </h2>
@@ -133,15 +134,26 @@ export default function App() {
                 <p className="text-xs font-mono" style={{ color: 'var(--color-text-3)' }}>
                   Check CloudWatch logs for Lambda errors
                 </p>
-                <button
-                  onClick={retry}
-                  className="px-6 py-3 rounded-xl glass-card text-sm font-semibold transition-all duration-150"
-                  style={{ color: 'var(--color-text-1)', border: '1px solid var(--color-glass-border)' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-text-3)')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-glass-border)')}
-                >
-                  ? Retry
-                </button>
+                <div className="flex gap-4 mt-2">
+                  <button
+                    onClick={retry}
+                    className="px-6 py-3 rounded-xl glass-card text-sm font-semibold transition-all duration-150"
+                    style={{ color: 'var(--color-text-1)', border: '1px solid var(--color-glass-border)' }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-text-3)')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-glass-border)')}
+                  >
+                    Retry
+                  </button>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-3 rounded-xl glass-card text-sm font-semibold transition-all duration-150"
+                    style={{ color: 'var(--color-text-1)', border: '1px solid var(--color-glass-border)' }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-text-3)')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-glass-border)')}
+                  >
+                    Home
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

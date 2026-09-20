@@ -2,11 +2,11 @@ import type { JobStatus, SeverityLevel, RootCause, RecommendedAction } from '../
 
 // ── Status display mapping ──────────────────────────────────────────────────
 export const STATUS_LABELS: Record<JobStatus, string> = {
-  PENDING:    '⏳ Waiting for log to arrive…',
-  PROCESSING: '🔬 Cleaning and analysing log…',
-  FORMATTING: '📝 Generating report…',
-  COMPLETE:   '✅ Diagnosis ready',
-  FAILED:     '❌ Diagnosis failed',
+  PENDING:    'Waiting for log to arrive…',
+  PROCESSING: 'Cleaning and analysing log…',
+  FORMATTING: 'Generating report…',
+  COMPLETE:   'Diagnosis ready',
+  FAILED:     'Diagnosis failed',
 };
 
 export const STATUS_STEPS = [

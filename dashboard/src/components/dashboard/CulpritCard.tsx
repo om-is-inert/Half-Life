@@ -57,7 +57,7 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
                     padding: '6px 14px',
                   }}
                 >
-                  ⚡ Wakelock Drain
+                  Wakelock Drain
                 </Badge>
               )}
               {cpu_offender && (
@@ -70,7 +70,7 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
                     padding: '6px 14px',
                   }}
                 >
-                  🔥 High CPU
+                  High CPU
                 </Badge>
               )}
               {(crash_count_24h ?? 0) > 0 && (
@@ -83,7 +83,7 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
                     padding: '6px 14px',
                   }}
                 >
-                  💥 Recurring Crash
+                  Recurring Crash
                 </Badge>
               )}
             </div>
@@ -91,7 +91,6 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
         </div>
       ) : (
         <div className="flex items-center gap-4 py-3">
-          <span className="text-2xl">✅</span>
           <span className="text-base leading-relaxed" style={{ color: 'var(--color-text-1)' }}>
             No dominant package offender found. System resources appear balanced.
           </span>

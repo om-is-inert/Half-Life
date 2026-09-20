@@ -1,5 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 import type { JobStatus } from '../../types/dashboard';
 import { STATUS_LABELS, STATUS_STEPS } from '../../config/tokens';
 
@@ -105,7 +106,7 @@ export const StatusLoader: React.FC<StatusLoaderProps> = ({ status, jobId, elaps
                   animate={isActive ? { scale: [1, 1.1, 1] } : { scale: 1 }}
                   transition={{ repeat: Infinity, duration: 2 }}
                 >
-                  {isDone ? '✓' : i + 1}
+                  {isDone ? <Check size={14} strokeWidth={3} /> : i + 1}
                 </motion.div>
                 {/* Label */}
                 <span

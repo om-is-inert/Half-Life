@@ -149,16 +149,16 @@ export const JobLookup: React.FC<JobLookupProps> = ({ onSubmit, isLoading }) => 
         </motion.button>
       </form>
 
-      {/* Helper hint */}
       <div
-        className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-mono"
-        style={{
-          background: 'hsla(0, 0%, 0%, 0.5)',
-          color: '#ffffff',
-          border: '1px solid var(--color-glass-border)',
-        }}
+        className="flex flex-col items-center gap-2 mt-4 text-sm"
+        style={{ color: 'var(--color-text-2)' }}
       >
-        <code>Run python main.py to get a Job ID</code>
+        <p className="font-semibold" style={{ color: 'var(--color-text-1)' }}>How to get a Job ID:</p>
+        <div className="flex flex-col items-start gap-1.5 text-left">
+          <p>1. Connect your Android device via USB.</p>
+          <p>2. Open your terminal in the project directory.</p>
+          <p>3. Run <code className="px-1.5 py-0.5 rounded bg-[hsla(0,0%,0%,0.5)] font-mono text-xs text-white border border-[var(--color-glass-border)]">python main.py</code></p>
+        </div>
       </div>
     </motion.section>
   );
