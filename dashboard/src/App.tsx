@@ -181,13 +181,19 @@ export default function App() {
                 {/* Fourth Row: Device & Diagnostic Metadata */}
                 <DeviceInfo report={report} />
 
-                {/* Re-diagnose CTA */}
-                <div className="flex justify-center pt-8">
+                {/* CTA Buttons */}
+                <div className="flex justify-center gap-4 pt-8">
                   <button
                     onClick={() => startPolling(report.jobId)}
                     className="text-xs font-mono transition-colors duration-150 py-3 px-6 border border-[var(--color-glass-border)] text-[var(--color-text-3)] hover:text-[var(--color-text-1)] uppercase tracking-widest"
                   >
                     Re-run diagnosis
+                  </button>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-xs font-mono transition-colors duration-150 py-3 px-6 border border-[var(--color-glass-border)] text-[var(--color-text-3)] hover:text-[var(--color-text-1)] uppercase tracking-widest"
+                  >
+                    Return to home
                   </button>
                 </div>
               </motion.div>
