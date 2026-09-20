@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { JobStatus, JobPollState } from '../types/dashboard';
 import { POLL_INTERVAL_MS, POLL_TIMEOUT_MS } from '../config/tokens';
+import { DEMO_MOCKS } from '../config/demo_mocks';
 
 export function useJobPolling() {
   const [state, setState] = useState<JobPollState>({
@@ -50,16 +51,21 @@ export function useJobPolling() {
       }
 
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/report/${jobId}`);
-        if (!res.ok) {
-          if (res.status === 404) {
-            cleanup();
-            setState(s => ({ ...s, isPolling: false, status: 'FAILED', error: 'Job not found.' }));
+        let data: any;
+        
+        if (DEMO_MOCKS[jobId]) {
+          data = { status: 'COMPLETE', report: DEMO_MOCKS[jobId] };
+        } else {
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/report/${jobId}`);
+          if (!res.ok) {
+            if (res.status === 404) {
+              cleanup();
+              setState(s => ({ ...s, isPolling: false, status: 'FAILED', error: 'Job not found.' }));
+            }
+            return;
           }
-          return;
+          data = await res.json();
         }
-
-        const data = await res.json();
 
         if (data.status === 'COMPLETE') {
           cleanup();
