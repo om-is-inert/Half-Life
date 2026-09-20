@@ -179,7 +179,17 @@ def parse_thermal(thermal: str) -> int:
 # Severity + root cause (rule-based, deterministic)
 # ---------------------------------------------------------------------------
 
-def classify(wear_pct: int | None, top_cpu_pct: int, thermal_events: int) -> dict:
+def classify(
+    wear_pct: int | None, 
+    top_cpu_pct: int, 
+    thermal_events: int,
+    battery_level: int | None,
+    has_cpu_data: bool,
+    has_wl_data: bool
+) -> dict:
+    if battery_level is None and wear_pct is None and not has_cpu_data and not has_wl_data and thermal_events == 0:
+        return {"root_cause": "insufficient_data", "severity": "UNKNOWN"}
+
     root_cause = "normal"
     severity   = "LOW"
 
@@ -228,6 +238,7 @@ ACTION_MAP = {
     "battery_degradation": ("replace_battery",  "Replace the battery — hardware service required"),
     "thermal_throttling": ("force_stop_package", "Force-stop the overheating application"),
     "memory_leak":        ("clear_cache",       "Clear the offending application's cache"),
+    "insufficient_data":  ("none",              "Unlock device and authorize USB debugging"),
     "normal":             ("none",              "No action required — device is healthy"),
 }
 
@@ -294,6 +305,12 @@ def build_summary(
         pkg = top_package or "a background process"
         parts.append(f"The primary heat source appears to be '{pkg}'. Consider force-stopping it.")
 
+    elif root_cause == "insufficient_data":
+        parts.append(
+            "Insufficient data extracted from the device. This typically happens if the device is "
+            "screen-locked, USB debugging is not authorized, or the OEM has restricted these diagnostic services."
+        )
+
     else:
         parts.append("Your device appears to be in good health with no significant hardware or software issues detected.")
 
@@ -324,6 +341,13 @@ def handler(event: dict, context) -> dict:
     payload_size = sum(len(s) for s in [battery_raw, batterystats_raw, cpuinfo_raw, thermal_raw])
     print(f"[analyze] device={device_id}, payload={payload_size}B, method={connection_method}")
 
+    if payload_size > 5 * 1024 * 1024:
+        return {
+            "statusCode": 413,
+            "headers": _cors(),
+            "body": json.dumps({"error": "Payload Too Large: exceeded 5MB limit."})
+        }
+
     # ── Parse ──────────────────────────────────────────────────────────────────
     battery  = parse_battery(battery_raw)
     capacity = parse_capacity(batterystats_raw)
@@ -346,7 +370,14 @@ def handler(event: dict, context) -> dict:
             break
 
     # ── Classify ───────────────────────────────────────────────────────────────
-    classification = classify(wear_pct, top_cpu_pct, thermal_events)
+    classification = classify(
+        wear_pct, 
+        top_cpu_pct, 
+        thermal_events,
+        battery["level"],
+        len(cpu_top5) > 0,
+        len(wl_top5) > 0
+    )
     root_cause     = classification["root_cause"]
     severity       = classification["severity"]
 

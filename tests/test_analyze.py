@@ -94,9 +94,23 @@ def test_handler_empty_input(monkeypatch):
     
     assert body["battery_level_pct"] is None
     assert body["battery_health_pct"] is None
-    assert body["severity"] == "LOW"
-    assert body["root_cause"] == "normal"
+    assert body["severity"] == "UNKNOWN"
+    assert body["root_cause"] == "insufficient_data"
     assert body["recommended_action"] == "none"
+
+def test_handler_payload_too_large():
+    event = {
+        "httpMethod": "POST",
+        "body": json.dumps({
+            "device_id": "TEST_DEVICE",
+            "battery_raw": "A" * (6 * 1024 * 1024) # 6MB
+        })
+    }
+    res = handler(event, {})
+    assert res["statusCode"] == 413
+    body = json.loads(res["body"])
+    assert "error" in body
+    assert "Payload Too Large" in body["error"]
 
 def test_handler_systemui_cpu(monkeypatch):
     import lambdas.analyze.handler

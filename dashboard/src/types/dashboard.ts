@@ -15,7 +15,7 @@ export type AnalysisStatus =
 // Keep for backwards-compat with existing status-loader component
 export type JobStatus = 'PENDING' | 'PROCESSING' | 'FORMATTING' | 'COMPLETE' | 'FAILED';
 
-export type SeverityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type SeverityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'UNKNOWN';
 
 export type RootCause =
   | 'rogue_process'
@@ -23,6 +23,7 @@ export type RootCause =
   | 'thermal_throttling'
   | 'memory_leak'
   | 'kernel_panic'
+  | 'insufficient_data'
   | 'normal'
   | 'unknown';
 

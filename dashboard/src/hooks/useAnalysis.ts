@@ -75,6 +75,12 @@ export function useAnalysis() {
       body: JSON.stringify(payload),
     });
     if (!resp.ok) {
+      if (resp.status === 413) {
+        throw new Error('Log payload exceeds processing limits (5MB max). Please reduce output size.');
+      }
+      if (resp.status === 504) {
+        throw new Error('Analysis timed out. The server took too long to respond.');
+      }
       const err = await resp.text().catch(() => resp.statusText);
       throw new Error(`Lambda error ${resp.status}: ${err}`);
     }
@@ -136,7 +142,14 @@ export function useAnalysis() {
     const doPoll = async () => {
       try {
         const resp = await fetch(`${API_BASE}/report/${encodeURIComponent(jobId)}`);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        if (!resp.ok) {
+          if (resp.status === 404) {
+            clearInterval(pollRef.current!);
+            setError('Diagnosis not found or expired (7 days).');
+            return;
+          }
+          throw new Error(`HTTP ${resp.status}`);
+        }
         const data = await resp.json();
 
         if (data.status === 'COMPLETE') {
