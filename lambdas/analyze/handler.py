@@ -92,7 +92,7 @@ def parse_battery(raw: str) -> dict:
 
 def parse_capacity(batterystats: str) -> dict:
     estimated = _int(r"Estimated battery capacity:\s+(\d+)\s*mAh", batterystats)
-    design    = _int(r"Design battery capacity:\s+(\d+)\s*mAh",    batterystats)
+    design    = _int(r"Design(?:ed)?(?: battery)? capacity:\s+(\d+)\s*mAh",    batterystats)
     if estimated and design and design > 0:
         wear_pct = round((estimated / design) * 100)
     else:
