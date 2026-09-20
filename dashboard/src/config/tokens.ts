@@ -55,7 +55,12 @@ export const ROOT_CAUSE_LABELS: Record<RootCause, string> = {
   battery_degradation: 'Battery Degradation',
   thermal_throttling:  'Thermal Throttling',
   memory_leak:         'Memory Leak',
+  storage_full:        'Storage Full',
+  memory_pressure:     'Memory Exhausted',
+  app_crash_loop:      'App Crash Loop',
   kernel_panic:        'Kernel Panic',
+  normal:              'Normal',
+  insufficient_data:   'Insufficient Data',
   unknown:             'Unknown',
 };
 
