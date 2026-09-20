@@ -105,28 +105,48 @@ function SeverityBadge({ report }: { report: DiagnosisReport }) {
   );
 }
 
-function ConfidenceBar({ confidence }: { confidence?: number }) {
-  const safeConfidence = confidence ?? 1.0;
-  const pct = Math.round(safeConfidence * 100);
+function SystemUtilization({ report }: { report: DiagnosisReport }) {
+  const memPct = report.memory_free_pct ?? null;
+  const storagePct = report.storage_utilization_pct ?? null;
 
   return (
-    <div className="w-full flex flex-col items-start gap-2 py-2">
-      <span className="text-3xl font-extrabold" style={{ color: '#ffffff' }}>
-        {pct}%
-      </span>
+    <div className="flex items-center justify-around w-full gap-6 py-3">
+      <div className="flex flex-col items-center gap-2">
+        <motion.span
+          className="text-4xl font-extrabold"
+          style={{ color: memPct !== null && memPct < 15 ? '#ef4444' : '#ffffff' }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          {memPct !== null ? `${memPct}%` : '?"'}
+        </motion.span>
+        <span
+          className="text-[10px] uppercase tracking-widest text-center"
+          style={{ color: 'var(--color-text-2)' }}
+        >
+          Free Memory
+        </span>
+      </div>
 
-      <span className="text-[10px] uppercase tracking-widest text-[var(--color-text-2)] font-mono">
-        AI Confidence
-      </span>
+      <div className="w-px h-14" style={{ background: 'var(--color-glass-border)' }} />
 
-      <div className="h-1 w-full mt-2" style={{ background: 'var(--color-glass-border)' }}>
-        <motion.div
-          className="h-full"
-          style={{ background: 'var(--color-text-1)' }}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 1.1, ease: 'easeInOut', delay: 0.15 }}
-        />
+      <div className="flex flex-col items-center gap-2">
+        <motion.span
+          className="text-4xl font-extrabold"
+          style={{ color: storagePct !== null && storagePct > 90 ? '#ef4444' : 'var(--color-text-1)' }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          {storagePct !== null ? `${storagePct}%` : '?"'}
+        </motion.span>
+        <span
+          className="text-[10px] uppercase tracking-widest text-center"
+          style={{ color: 'var(--color-text-2)' }}
+        >
+          Storage Used
+        </span>
       </div>
     </div>
   );
@@ -180,7 +200,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ report }) => {
   const cards = [
     { title: 'Battery Health', content: <BatteryGauge pct={report.battery_health_pct} /> },
     { title: 'Severity',       content: <SeverityBadge report={report} /> },
-    { title: 'Confidence',     content: <ConfidenceBar confidence={report.confidence ?? 1.0} /> },
+    { title: 'System State',   content: <SystemUtilization report={report} /> },
     { title: 'Events',         content: <EventCounters report={report} /> },
   ];
 

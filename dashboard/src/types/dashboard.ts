@@ -9,7 +9,12 @@ export type RootCause =
   | 'battery_degradation'
   | 'thermal_throttling'
   | 'memory_leak'
+  | 'storage_full'
+  | 'memory_pressure'
+  | 'app_crash_loop'
   | 'kernel_panic'
+  | 'normal'
+  | 'insufficient_data'
   | 'unknown';
 
 export type RecommendedAction =
@@ -40,6 +45,10 @@ export interface DiagnosisReport {
   // Event counters
   crash_count_24h: number | null;
   thermal_events: number | null;
+
+  // New Diagnostics
+  memory_free_pct?: number | null;
+  storage_utilization_pct?: number | null;
 
   // AI output
   diagnosis_summary: string;

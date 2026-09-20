@@ -176,6 +176,30 @@ def parse_thermal(thermal: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Crashes, Memory, Storage
+# ---------------------------------------------------------------------------
+
+def parse_crashes(dropbox: str) -> int:
+    matches = re.findall(r"data_app_crash|data_app_anr|FATAL EXCEPTION|ANR in", dropbox, re.IGNORECASE)
+    return len(matches)
+
+def parse_memory(meminfo: str) -> dict:
+    total = _int(r"Total RAM:\s*([\d]+)K", meminfo.replace(",", ""))
+    free = _int(r"Free RAM:\s*([\d]+)K", meminfo.replace(",", ""))
+    if total and free:
+        return {"total_kb": total, "free_kb": free, "free_pct": round((free / total) * 100)}
+    return {"total_kb": None, "free_kb": None, "free_pct": None}
+
+def parse_storage(storage: str) -> dict:
+    m = re.search(r"Data-Free:\s*(\d+)K\s*/\s*(\d+)K\s*total", storage, re.IGNORECASE)
+    if m:
+        free = int(m.group(1))
+        total = int(m.group(2))
+        return {"total_kb": total, "free_kb": free, "utilization_pct": 100 - round((free / total) * 100)}
+    return {"total_kb": None, "free_kb": None, "utilization_pct": None}
+
+
+# ---------------------------------------------------------------------------
 # Severity + root cause (rule-based, deterministic)
 # ---------------------------------------------------------------------------
 
@@ -185,13 +209,32 @@ def classify(
     thermal_events: int,
     battery_level: int | None,
     has_cpu_data: bool,
-    has_wl_data: bool
+    has_wl_data: bool,
+    crashes: int,
+    memory_free_pct: int | None,
+    storage_utilization_pct: int | None
 ) -> dict:
-    if battery_level is None and wear_pct is None and not has_cpu_data and not has_wl_data and thermal_events == 0:
+    if battery_level is None and wear_pct is None and not has_cpu_data and not has_wl_data and thermal_events == 0 and crashes == 0 and memory_free_pct is None and storage_utilization_pct is None:
         return {"root_cause": "insufficient_data", "severity": "UNKNOWN"}
 
     root_cause = "normal"
     severity   = "LOW"
+
+    # Storage Check
+    if storage_utilization_pct is not None and storage_utilization_pct > 95:
+        root_cause, severity = "storage_full", "CRITICAL"
+
+    # Memory Check
+    if memory_free_pct is not None and memory_free_pct < 10:
+        root_cause = root_cause if severity == "CRITICAL" else "memory_pressure"
+        if severity not in ("CRITICAL",):
+            severity = "HIGH"
+
+    # App Crash Loop
+    if crashes > 5:
+        root_cause = root_cause if severity == "CRITICAL" else "app_crash_loop"
+        if severity not in ("CRITICAL",):
+            severity = "HIGH"
 
     # Battery degradation check
     if wear_pct is not None:
@@ -238,6 +281,9 @@ ACTION_MAP = {
     "battery_degradation": ("replace_battery",  "Replace the battery — hardware service required"),
     "thermal_throttling": ("force_stop_package", "Force-stop the overheating application"),
     "memory_leak":        ("clear_cache",       "Clear the offending application's cache"),
+    "storage_full":       ("none",              "Delete media or unused applications"),
+    "memory_pressure":    ("none",              "Close background apps to free RAM"),
+    "app_crash_loop":     ("clear_cache",       "Clear cache or uninstall crashing application"),
     "insufficient_data":  ("none",              "Unlock device and authorize USB debugging"),
     "normal":             ("none",              "No action required — device is healthy"),
 }
@@ -311,6 +357,24 @@ def build_summary(
             "screen-locked, USB debugging is not authorized, or the OEM has restricted these diagnostic services."
         )
 
+    elif root_cause == "storage_full":
+        parts.append(
+            "Your device's internal storage is critically full. "
+            "Android systems require at least 5% free space to function properly. Please delete large media or unused apps."
+        )
+
+    elif root_cause == "memory_pressure":
+        parts.append(
+            "Your device is critically low on available RAM, causing background applications to be "
+            "frequently killed and resulting in UI lag."
+        )
+
+    elif root_cause == "app_crash_loop":
+        parts.append(
+            "High frequency of application crashes and 'App Not Responding' (ANR) events detected. "
+            "A specific application or system component is highly unstable."
+        )
+
     else:
         parts.append("Your device appears to be in good health with no significant hardware or software issues detected.")
 
@@ -336,9 +400,12 @@ def handler(event: dict, context) -> dict:
     batterystats_raw  = body.get("batterystats_raw", "")
     cpuinfo_raw       = body.get("cpuinfo_raw", "")
     thermal_raw       = body.get("thermal_raw", "")
+    dropbox_raw       = body.get("dropbox_raw", "")
+    meminfo_raw       = body.get("meminfo_raw", "")
+    storage_raw       = body.get("storage_raw", "")
     connection_method = body.get("connection_method", "paste")
 
-    payload_size = sum(len(s) for s in [battery_raw, batterystats_raw, cpuinfo_raw, thermal_raw])
+    payload_size = sum(len(s) for s in [battery_raw, batterystats_raw, cpuinfo_raw, thermal_raw, dropbox_raw, meminfo_raw, storage_raw])
     print(f"[analyze] device={device_id}, payload={payload_size}B, method={connection_method}")
 
     if payload_size > 5 * 1024 * 1024:
@@ -354,6 +421,10 @@ def handler(event: dict, context) -> dict:
     wl_top5  = parse_wakelocks(batterystats_raw)
     cpu_top5 = parse_cpu(cpuinfo_raw)
     thermal_events = parse_thermal(thermal_raw)
+    
+    crashes = parse_crashes(dropbox_raw)
+    memory  = parse_memory(meminfo_raw)
+    storage = parse_storage(storage_raw)
 
     wear_pct = capacity["wear_pct"]
     
@@ -376,7 +447,10 @@ def handler(event: dict, context) -> dict:
         thermal_events,
         battery["level"],
         len(cpu_top5) > 0,
-        len(wl_top5) > 0
+        len(wl_top5) > 0,
+        crashes,
+        memory["free_pct"],
+        storage["utilization_pct"]
     )
     root_cause     = classification["root_cause"]
     severity       = classification["severity"]
@@ -438,8 +512,12 @@ def handler(event: dict, context) -> dict:
         "cpu_offender":      top_cpu_pct > 15,
 
         # Events
-        "crash_count_24h": None,  # Not parsed from the targeted output (requires logcat)
+        "crash_count_24h": crashes,
         "thermal_events":  thermal_events,
+        
+        # New Diagnostics
+        "memory_free_pct": memory["free_pct"],
+        "storage_utilization_pct": storage["utilization_pct"],
 
         # Diagnosis
         "diagnosis_summary":  diagnosis_summary,

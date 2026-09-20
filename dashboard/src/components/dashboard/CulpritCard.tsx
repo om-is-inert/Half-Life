@@ -51,7 +51,10 @@ export const CulpritCard: React.FC<CulpritCardProps> = ({ report }) => {
       ) : (
         <div className="flex items-center gap-4 py-3">
           <span className="text-base leading-relaxed" style={{ color: 'var(--color-text-1)' }}>
-            No dominant package offender found. System resources appear balanced.
+            {report.root_cause === 'storage_full' ? 'System storage is critically full.' :
+             report.root_cause === 'memory_pressure' ? 'System memory is exhausted by background processes.' :
+             report.root_cause === 'app_crash_loop' ? 'System experiencing severe instability and frequent crashes.' :
+             'No dominant package offender found. System resources appear balanced.'}
           </span>
         </div>
       )}

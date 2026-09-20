@@ -134,3 +134,18 @@ def test_handler_systemui_cpu(monkeypatch):
     # But it should still show up in the top 5
     assert len(body["cpu_top5"]) == 2
     assert body["cpu_top5"][0]["package"] == "com.android.systemui"
+
+def test_parse_memory():
+    from lambdas.analyze.handler import parse_memory
+    raw = "Total RAM: 8,388,608K (status normal)\n Free RAM: 512,000K"
+    res = parse_memory(raw)
+    assert res["total_kb"] == 8388608
+    assert res["free_pct"] == 6
+
+def test_parse_storage():
+    from lambdas.analyze.handler import parse_storage
+    raw = "Data-Free: 5242880K / 10485760K total"
+    res = parse_storage(raw)
+    assert res["total_kb"] == 10485760
+    assert res["free_kb"] == 5242880
+    assert res["utilization_pct"] == 50
