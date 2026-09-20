@@ -121,6 +121,12 @@ export interface DiagnosticsPayload {
   cpuinfo_raw: string;
   thermal_raw: string;
   connection_method: ConnectionMethod;
+  collection_status?: {
+    battery: string;
+    batterystats: string;
+    cpuinfo: string;
+    thermal: string;
+  };
 }
 
 export interface AdbRunResult {

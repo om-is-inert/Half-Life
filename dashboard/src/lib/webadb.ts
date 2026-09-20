@@ -137,7 +137,11 @@ export async function connectDevice(): Promise<DeviceSession> {
 export async function runShell(handle: AdbHandle, command: string, limitBytes = 1024 * 1024, timeoutMs = 10000): Promise<string> {
   let process: any;
   try {
-    process = await handle.adb.subprocess.noneProtocol.spawn(['shell', command]);
+    process = await withTimeout(
+      handle.adb.subprocess.noneProtocol.spawn(command),
+      5000,
+      'Timeout spawning subprocess'
+    );
   } catch (e) {
     return `[SPAWN ERROR: ${e instanceof Error ? e.message : String(e)}]`;
   }
@@ -214,6 +218,13 @@ export async function collectDiagnostics(session: DeviceSession): Promise<Diagno
     runShell(h, `dumpsys ${thermalServiceName}`),
   ]);
 
+  const collection_status = {
+    battery: (battery_raw.includes('[ERROR]') || battery_raw.includes('[INCOMPLETE')) ? 'partial' : 'ok',
+    batterystats: (batterystats_raw.includes('[ERROR]') || batterystats_raw.includes('[INCOMPLETE')) ? 'partial' : 'ok',
+    cpuinfo: (cpuinfo_raw.includes('[ERROR]') || cpuinfo_raw.includes('[INCOMPLETE')) ? 'partial' : 'ok',
+    thermal: (thermal_raw.includes('[ERROR]') || thermal_raw.includes('[INCOMPLETE')) ? 'partial' : 'ok',
+  };
+
   return {
     device_id: session.serial,
     battery_raw,
@@ -221,6 +232,7 @@ export async function collectDiagnostics(session: DeviceSession): Promise<Diagno
     cpuinfo_raw,
     thermal_raw,
     connection_method: 'webusb',
+    collection_status,
   };
 }
 

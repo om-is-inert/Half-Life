@@ -92,7 +92,7 @@ def parse_battery(raw: str) -> dict:
 
 def parse_capacity(batterystats: str) -> dict:
     estimated = _int(r"Estimated battery capacity:\s+(\d+)\s*mAh", batterystats)
-    design    = _int(r"Design battery capacity:\s+(\d+)\s*mAh",    batterystats)
+    design    = _int(r"Design(?:ed)? (?:battery )?capacity:\s+(\d+)\s*mAh",    batterystats)
     if estimated and design and design > 0:
         wear_pct = round((estimated / design) * 100)
     else:
@@ -166,13 +166,10 @@ def parse_cpu(cpuinfo: str) -> list[dict]:
 # Thermal events
 # ---------------------------------------------------------------------------
 
-def parse_thermal(thermal: str) -> int:
-    matches = re.findall(
-        r"IsThrottling:\s*true|Critical Temperature:\s*true|emergency shutdown",
-        thermal,
-        re.IGNORECASE,
-    )
-    return len(matches)
+def parse_thermal(thermal: str) -> dict:
+    is_throttling = bool(re.search(r"IsThrottling:\s*true", thermal, re.IGNORECASE))
+    critical_temp = bool(re.search(r"Critical Temperature:\s*true|emergency shutdown", thermal, re.IGNORECASE))
+    return {"is_throttling": is_throttling, "critical_temp": critical_temp}
 
 
 # ---------------------------------------------------------------------------
@@ -182,19 +179,32 @@ def parse_thermal(thermal: str) -> int:
 def classify(
     wear_pct: int | None, 
     top_cpu_pct: int, 
-    thermal_events: int,
-    battery_level: int | None,
+    thermal: dict,
+    battery: dict,
     has_cpu_data: bool,
     has_wl_data: bool
 ) -> dict:
-    if battery_level is None and wear_pct is None and not has_cpu_data and not has_wl_data and thermal_events == 0:
+    battery_level = battery.get("level")
+    battery_temp = battery.get("temperature_celsius")
+    health_code = battery.get("health_code")
+    is_throttling = thermal.get("is_throttling", False)
+    critical_temp = thermal.get("critical_temp", False)
+
+    if battery_level is None and wear_pct is None and not has_cpu_data and not has_wl_data and not is_throttling and not critical_temp:
         return {"root_cause": "insufficient_data", "severity": "UNKNOWN"}
+
+    missing_evidence = not has_cpu_data or battery_level is None or not has_wl_data
 
     root_cause = "normal"
     severity   = "LOW"
 
-    # Battery degradation check
-    if wear_pct is not None:
+    # Battery degradation / dead / overheat
+    if health_code in (4, 3, 5, 6, 7) or (battery_temp and battery_temp >= 60):
+        if health_code == 4:
+            root_cause, severity = "battery_degradation", "CRITICAL"
+        else:
+            root_cause, severity = "thermal_throttling" if health_code == 3 or (battery_temp and battery_temp >= 60) else "battery_degradation", "CRITICAL"
+    elif wear_pct is not None:
         if wear_pct < 60:
             root_cause, severity = "battery_degradation", "CRITICAL"
         elif wear_pct < 75:
@@ -202,7 +212,7 @@ def classify(
         elif wear_pct < 85:
             root_cause, severity = "battery_degradation", "MEDIUM"
 
-    # Rogue process (CPU) — override severity if worse
+    # Rogue process (CPU)
     if top_cpu_pct > 50:
         root_cause = "rogue_process"
         if severity not in ("CRITICAL",):
@@ -217,14 +227,17 @@ def classify(
             severity = "MEDIUM"
 
     # Thermal throttling
-    if thermal_events > 5:
+    if critical_temp:
         root_cause = root_cause if root_cause != "normal" else "thermal_throttling"
         if severity not in ("CRITICAL",):
             severity = "CRITICAL"
-    elif thermal_events > 2:
+    elif is_throttling:
         root_cause = root_cause if root_cause != "normal" else "thermal_throttling"
         if severity not in ("CRITICAL", "HIGH"):
             severity = "HIGH"
+
+    if root_cause == "normal" and missing_evidence:
+        return {"root_cause": "insufficient_data", "severity": "UNKNOWN"}
 
     return {"root_cause": root_cause, "severity": severity}
 
@@ -237,7 +250,6 @@ ACTION_MAP = {
     "rogue_process":      ("disable_package",  "Disable the offending application"),
     "battery_degradation": ("replace_battery",  "Replace the battery — hardware service required"),
     "thermal_throttling": ("force_stop_package", "Force-stop the overheating application"),
-    "memory_leak":        ("clear_cache",       "Clear the offending application's cache"),
     "insufficient_data":  ("none",              "Unlock device and authorize USB debugging"),
     "normal":             ("none",              "No action required — device is healthy"),
 }
@@ -245,7 +257,6 @@ ACTION_MAP = {
 ADB_COMMANDS = {
     "disable_package":    "adb shell pm disable-user --user 0 {package}",
     "force_stop_package": "adb shell am force-stop {package}",
-    "clear_cache":        "adb shell pm clear {package}",
     "replace_battery":    None,
     "none":               None,
 }
@@ -272,7 +283,7 @@ def build_summary(
     wear_pct: int | None,
     top_package: str | None,
     top_cpu_pct: int,
-    thermal_events: int,
+    thermal: dict,
     design_mah: int | None,
     estimated_mah: int | None,
 ) -> str:
@@ -299,7 +310,7 @@ def build_summary(
 
     elif root_cause == "thermal_throttling":
         parts.append(
-            f"The device recorded {thermal_events} thermal throttling event(s), "
+            f"The device recorded critical thermal conditions or active throttling, "
             "causing the CPU to be clocked down to reduce heat."
         )
         pkg = top_package or "a background process"
@@ -328,15 +339,23 @@ def handler(event: dict, context) -> dict:
 
     try:
         body = json.loads(event.get("body") or "{}")
-    except json.JSONDecodeError:
+        if not isinstance(body, dict):
+            raise ValueError()
+    except (json.JSONDecodeError, ValueError):
         return {"statusCode": 400, "headers": _cors(), "body": json.dumps({"error": "Invalid JSON"})}
 
     device_id         = body.get("device_id", "unknown")
+    if not isinstance(device_id, str): device_id = "unknown"
     battery_raw       = body.get("battery_raw", "")
+    if not isinstance(battery_raw, str): battery_raw = ""
     batterystats_raw  = body.get("batterystats_raw", "")
+    if not isinstance(batterystats_raw, str): batterystats_raw = ""
     cpuinfo_raw       = body.get("cpuinfo_raw", "")
+    if not isinstance(cpuinfo_raw, str): cpuinfo_raw = ""
     thermal_raw       = body.get("thermal_raw", "")
+    if not isinstance(thermal_raw, str): thermal_raw = ""
     connection_method = body.get("connection_method", "paste")
+    if not isinstance(connection_method, str): connection_method = "paste"
 
     payload_size = sum(len(s) for s in [battery_raw, batterystats_raw, cpuinfo_raw, thermal_raw])
     print(f"[analyze] device={device_id}, payload={payload_size}B, method={connection_method}")
@@ -353,7 +372,7 @@ def handler(event: dict, context) -> dict:
     capacity = parse_capacity(batterystats_raw)
     wl_top5  = parse_wakelocks(batterystats_raw)
     cpu_top5 = parse_cpu(cpuinfo_raw)
-    thermal_events = parse_thermal(thermal_raw)
+    thermal_data = parse_thermal(thermal_raw)
 
     wear_pct = capacity["wear_pct"]
     
@@ -362,7 +381,7 @@ def handler(event: dict, context) -> dict:
     top_package = None
     for c in cpu_top5:
         pkg = c["package"]
-        if pkg in ("system_server", "android", "TOTAL") or pkg.startswith("com.android."):
+        if pkg in ("system_server", "android", "TOTAL") or pkg.startswith("com.android.") or "." not in pkg:
             continue
         if c["total_pct"] > top_cpu_pct:
             top_cpu_pct = c["total_pct"]
@@ -373,8 +392,8 @@ def handler(event: dict, context) -> dict:
     classification = classify(
         wear_pct, 
         top_cpu_pct, 
-        thermal_events,
-        battery["level"],
+        thermal_data,
+        battery,
         len(cpu_top5) > 0,
         len(wl_top5) > 0
     )
@@ -387,7 +406,7 @@ def handler(event: dict, context) -> dict:
 
     diagnosis_summary = build_summary(
         root_cause, severity, wear_pct,
-        top_package, top_cpu_pct, thermal_events,
+        top_package, top_cpu_pct, thermal_data,
         capacity["design_mah"], capacity["estimated_mah"],
     )
 
@@ -439,7 +458,8 @@ def handler(event: dict, context) -> dict:
 
         # Events
         "crash_count_24h": None,  # Not parsed from the targeted output (requires logcat)
-        "thermal_events":  thermal_events,
+        "is_throttling":  thermal_data["is_throttling"],
+        "critical_temp":  thermal_data["critical_temp"],
 
         # Diagnosis
         "diagnosis_summary":  diagnosis_summary,

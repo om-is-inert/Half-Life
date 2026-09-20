@@ -18,12 +18,13 @@ import type {
   DeviceSession,
   ConnectionMethod,
 } from '../types/dashboard';
-import { collectDiagnostics } from '../lib/webadb';
+import { collectDiagnostics, disconnectDevice } from '../lib/webadb';
 
 // ── Config ─────────────────────────────────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_API_URL ?? 'https://REPLACE_ME.execute-api.us-east-1.amazonaws.com/prod';
-const POLL_INTERVAL_MS = 3000;
-const POLL_TIMEOUT_MS  = 60_000;
+const API_BASE = import.meta.env.VITE_API_URL;
+if (!API_BASE) {
+  console.warn('VITE_API_URL is missing. API requests will fail.');
+}
 
 // ── Step labels for each analysis status ──────────────────────────────────────
 const STEP_LABELS: Record<AnalysisStatus, string> = {
@@ -132,57 +133,77 @@ export function useAnalysis() {
     }
   }, [startTimer, setStatus, setError, postAnalyze]);
 
-  // ── Flow 3: Job ID polling (returning users) ──────────────────────────────────
-  const analyzeJobId = useCallback((jobId: string) => {
-    if (pollRef.current) clearInterval(pollRef.current);
+  // ── Flow 3: Job ID lookup (returning users) ──────────────────────────────────
+  const analyzeJobId = useCallback(async (jobId: string) => {
     setState({ ...INITIAL_STATE, status: 'ANALYSING', stepLabel: `Fetching job ${jobId}…`, elapsedSeconds: 0 });
     startTimer();
-    const deadline = Date.now() + POLL_TIMEOUT_MS;
+    
+    if (!API_BASE) {
+      setError('System configuration error: VITE_API_URL is missing.');
+      return;
+    }
 
-    const doPoll = async () => {
+    let retries = 3;
+    while (retries > 0) {
       try {
-        const resp = await fetch(`${API_BASE}/report/${encodeURIComponent(jobId)}`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        
+        const resp = await fetch(`${API_BASE}/report/${encodeURIComponent(jobId)}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+
         if (!resp.ok) {
           if (resp.status === 404) {
-            clearInterval(pollRef.current!);
             setError('Diagnosis not found or expired (7 days).');
             return;
           }
           throw new Error(`HTTP ${resp.status}`);
         }
+        
         const data = await resp.json();
-
         if (data.status === 'COMPLETE') {
-          clearInterval(pollRef.current!);
           if (timerRef.current) clearInterval(timerRef.current);
-          setState(s => ({ ...s, status: 'COMPLETE', stepLabel: STEP_LABELS['COMPLETE'], report: data.report }));
+          if (data.report && data.report.severity) {
+             setState(s => ({ ...s, status: 'COMPLETE', stepLabel: STEP_LABELS['COMPLETE'], report: data.report }));
+          } else {
+             setError('Invalid response from server.');
+          }
+          return;
         } else if (data.status === 'FAILED') {
-          clearInterval(pollRef.current!);
           setError(data.error ?? 'Job failed on server');
-        } else if (Date.now() > deadline) {
-          clearInterval(pollRef.current!);
-          setError('Timed out waiting for job to complete.');
+          return;
+        } else {
+          // If PROCESSING, wait a bit and retry
+          await new Promise(r => setTimeout(r, 2000));
+          retries--;
         }
       } catch (e: unknown) {
-        // Network blip — keep polling
-        console.warn('Poll error:', e);
+        if (e instanceof Error && e.name === 'AbortError') {
+           // timeout
+        }
+        retries--;
+        if (retries === 0) {
+          setError(`Failed to fetch report: ${e instanceof Error ? e.message : String(e)}`);
+          return;
+        }
+        await new Promise(r => setTimeout(r, 1500));
       }
-    };
-
-    doPoll();
-    pollRef.current = setInterval(doPoll, POLL_INTERVAL_MS);
+    }
+    setError('Failed to fetch job after multiple attempts.');
   }, [startTimer, setError]);
 
   const reset = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (pollRef.current) clearInterval(pollRef.current);
+    disconnectDevice();
     setState(INITIAL_STATE);
   }, []);
 
   // Cleanup
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (pollRef.current) clearInterval(pollRef.current);
+    disconnectDevice();
   }, []);
 
   return {
