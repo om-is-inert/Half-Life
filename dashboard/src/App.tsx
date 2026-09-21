@@ -1,4 +1,4 @@
-import Beams from './components/Beams';
+﻿import Beams from './components/Beams';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
@@ -32,8 +32,8 @@ export default function App() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[var(--color-bg)] text-[var(--color-text-1)] relative">
       {/* Background Beams */}
       <div
-        className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0 opacity-20"
-        style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0 }}
+        className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0 "
+        style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0, opacity: 0.40 }}
         aria-hidden
       >
         <Beams
